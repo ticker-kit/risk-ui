@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 function App() {
   const [ticker, setTicker] = useState('')
   const [data, setData] = useState(null)
@@ -9,8 +11,9 @@ function App() {
     setLoading(true)
     setData(null)
 
+
     try {
-      const res = await fetch('https://risk-api-7m3a.onrender.com/risk_metrics_from_ticker', {
+      const res = await fetch(`${API_BASE}/risk_metrics_from_ticker`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -19,6 +22,7 @@ function App() {
       })
 
       const result = await res.json()
+
       setData(result)
     } catch (err) {
       console.error('Error:', err);
