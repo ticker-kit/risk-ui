@@ -1,64 +1,88 @@
-import { useState } from 'react'
-
-const API_BASE = import.meta.env.VITE_API_URL;
+// App.jsx
+import { Routes, Route, Link } from 'react-router-dom'
+import TickerMetrics from './pages/TickerMetrics'
+import Portfolio from './pages/Portfolio'
 
 function App() {
-  const [ticker, setTicker] = useState('')
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
-
-  const fetchRiskMetrics = async () => {
-    setLoading(true)
-    setData(null)
-
-
-    try {
-      const res = await fetch(`${API_BASE}/risk_metrics_from_ticker`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ ticker })
-      })
-
-      const result = await res.json()
-
-      setData(result)
-    } catch (err) {
-      console.error('Error:', err);
-      alert('Something went wrong');
-    }
-
-    setLoading(false)
-  }
-
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h2 className="text-3xl font-bold underline">Risk Metrics API</h2>
-      <input
-        type="text"
-        value={ticker}
-        onChange={(e) => setTicker(e.target.value)}
-        placeholder="Enter ticker (e.g., AAPL)"
-      />
-      <button onClick={fetchRiskMetrics} disabled={loading}>
-        {loading ? 'Loading...' : 'Fetch Risk Metrics'}
-      </button>
+    <div className="p-6 font-sans">
+      <nav className="mb-6 space-x-4">
+        <Link to="/" className="text-blue-600 hover:underline">Ticker Metrics</Link>
+        <Link to="/portfolio" className="text-blue-600 hover:underline">Portfolio</Link>
+      </nav>
 
-      {data && (
-        <div style={{ marginTop: '1rem' }}>
-          <h4>Risk Metrics for {ticker}</h4>
-          <ul>
-            <li><strong>Mean Return:</strong> {data.mean_return}</li>
-            <li><strong>Volatility:</strong> {data.volatility}</li>
-            <li><strong>Sharpe Ratio:</strong> {data.sharpe_ratio}</li>
-            <li><strong>Max Drawdown:</strong> {data.max_drawdown}</li>
-          </ul>
-        </div>
-      )}
-
+      <Routes>
+        <Route path="/" element={<TickerMetrics />} />
+        <Route path="/portfolio" element={<Portfolio />} />
+      </Routes>
     </div>
   )
 }
 
-export default App;
+export default App
+
+// OLD CODE
+// import { useState } from 'react'
+
+// const API_BASE = import.meta.env.VITE_API_URL;
+
+// function App() {
+//   const [ticker, setTicker] = useState('')
+//   const [data, setData] = useState(null)
+//   const [loading, setLoading] = useState(false)
+
+//   const fetchRiskMetrics = async () => {
+//     setLoading(true)
+//     setData(null)
+
+
+//     try {
+//       const res = await fetch(`${API_BASE}/risk_metrics_from_ticker`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify({ ticker })
+//       })
+
+//       const result = await res.json()
+
+//       setData(result)
+//     } catch (err) {
+//       console.error('Error:', err);
+//       alert('Something went wrong');
+//     }
+
+//     setLoading(false)
+//   }
+
+//   return (
+//     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+//       <h2 className="text-3xl font-bold underline">Risk Metrics API</h2>
+//       <input
+//         type="text"
+//         value={ticker}
+//         onChange={(e) => setTicker(e.target.value)}
+//         placeholder="Enter ticker (e.g., AAPL)"
+//       />
+//       <button onClick={fetchRiskMetrics} disabled={loading}>
+//         {loading ? 'Loading...' : 'Fetch Risk Metrics'}
+//       </button>
+
+//       {data && (
+//         <div style={{ marginTop: '1rem' }}>
+//           <h4>Risk Metrics for {ticker}</h4>
+//           <ul>
+//             <li><strong>Mean Return:</strong> {data.mean_return}</li>
+//             <li><strong>Volatility:</strong> {data.volatility}</li>
+//             <li><strong>Sharpe Ratio:</strong> {data.sharpe_ratio}</li>
+//             <li><strong>Max Drawdown:</strong> {data.max_drawdown}</li>
+//           </ul>
+//         </div>
+//       )}
+
+//     </div>
+//   )
+// }
+
+// export default App;
