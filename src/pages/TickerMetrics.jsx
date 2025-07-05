@@ -43,7 +43,12 @@ function TickerMetrics() {
         <div className='max-w-xl mx-auto p-4'>
             <h2 className='text-2xl font-bold mb-4'>Risk Metrics</h2>
 
-            <div className='flex gap-2 mb-4'>
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    fetchRiskMetrics()
+                }}
+                className='flex gap-2 mb-4'>
                 <input
                     type='text'
                     value={ticker}
@@ -59,7 +64,7 @@ function TickerMetrics() {
                     {loading ? 'Loading...' : 'Fetch Metrics'}
                 </button>
 
-            </div>
+            </form>
 
             {error && <p className="text-red-600 mb-4">{error}</p>}
 
