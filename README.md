@@ -22,3 +22,7 @@ For local dev
 For production:
 - `npm run build`
 - `npx serve -s dist`
+
+## Live Demo
+https://risk-ui-nine.vercel.app
+Powered by FastAPI backend hosted on Render
