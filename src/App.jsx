@@ -34,7 +34,7 @@ function App() {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h2>Risk Metrics API</h2>
+      <h2 className="text-3xl font-bold underline">Risk Metrics API</h2>
       <input
         type="text"
         value={ticker}

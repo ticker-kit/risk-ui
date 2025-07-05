@@ -26,3 +26,14 @@ For production:
 ## Live Demo
 https://risk-ui-nine.vercel.app
 Powered by FastAPI backend hosted on Render
+
+
+
+## Installation process
+- `npm create vite@latest risk-ui -- --template react`
+- `npm install`
+- App.jsx ...
+- .env ...
+- `npm install tailwindcss @tailwindcss/vite` (version 4.1)
+- - add `tailwindcss()` to `vite.config.js`
+- - add `@import "tailwindcss";` to `src\index.css` 
