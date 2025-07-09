@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useAuth } from '../hooks/useAuth'
 
 function Portfolio() {
-  const { token } = useAuth()
+  const { token, handleTokenExpired } = useAuth()
   const searchTimeoutRef = useRef(null)
   const [positions, setPositions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -30,7 +30,7 @@ function Portfolio() {
   const API_URL = import.meta.env.VITE_API_URL
 
   // Fetch portfolio positions
-  const fetchPositions = async () => {
+  const fetchPositions = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`${API_URL}/portfolio`, {
@@ -40,6 +40,10 @@ function Portfolio() {
       })
 
       if (!response.ok) {
+        // Only auto-logout on 401, let other errors be handled normally
+        if (response.status === 401) {
+          handleTokenExpired(response)
+        }
         throw new Error('Failed to fetch portfolio')
       }
 
@@ -50,7 +54,7 @@ function Portfolio() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [API_URL, token, handleTokenExpired])
 
   // Search tickers with debounce
   const searchTickers = async (query) => {
@@ -69,6 +73,9 @@ function Portfolio() {
       })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleTokenExpired(response)
+        }
         throw new Error('Failed to search tickers')
       }
 
@@ -107,6 +114,9 @@ function Portfolio() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (response.status === 401) {
+          handleTokenExpired(response)
+        }
         throw new Error(errorData.detail || 'Failed to add position')
       }
 
@@ -138,6 +148,9 @@ function Portfolio() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (response.status === 401) {
+          handleTokenExpired(response)
+        }
         throw new Error(errorData.detail || 'Failed to update position')
       }
 
@@ -163,6 +176,9 @@ function Portfolio() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (response.status === 401) {
+          handleTokenExpired(response)
+        }
         throw new Error(errorData.detail || 'Failed to delete position')
       }
 
@@ -247,7 +263,7 @@ function Portfolio() {
         clearTimeout(searchTimeoutRef.current)
       }
     }
-  }, [])
+  }, [fetchPositions])
 
   // Handle click outside to close dropdown
   useEffect(() => {

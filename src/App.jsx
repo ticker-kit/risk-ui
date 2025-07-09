@@ -1,5 +1,5 @@
 import { Routes, Route, Link } from 'react-router-dom'
-import { useAuth } from './contexts/AuthContext'
+import { useAuth } from './hooks/useAuth'
 import TickerMetrics from './pages/TickerMetrics'
 import Portfolio from './pages/Portfolio'
 import Home from './pages/Home'

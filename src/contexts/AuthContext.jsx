@@ -1,32 +1,66 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-
-const AuthContext = createContext()
-
-export const useAuth = () => {
-    const context = useContext(AuthContext)
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider')
-    }
-    return context
-}
+import { useState, useEffect, useCallback } from 'react'
+import { AuthContext } from './AuthContext.js'
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [token, setToken] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        // Check for stored token on app load
-        const storedToken = localStorage.getItem('token')
-        const storedUser = localStorage.getItem('user')
+    // Function to clear auth state
+    const clearAuth = () => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setToken(null)
+        setUser(null)
+    }
 
-        if (storedToken && storedUser) {
-            setToken(storedToken)
-            setUser(JSON.parse(storedUser))
+    // Function to validate token with backend
+    const validateToken = useCallback(async (tokenToValidate) => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/me`, {
+                headers: {
+                    'Authorization': `Bearer ${tokenToValidate}`,
+                },
+            })
+
+            if (!response.ok) {
+                // Token is invalid, clear auth state
+                clearAuth()
+                return false
+            }
+
+            const userData = await response.json()
+            setUser({ username: userData.username })
+            return true
+        } catch (error) {
+            console.error('Token validation failed:', error)
+            clearAuth()
+            return false
+        }
+    }, [])
+
+    useEffect(() => {
+        const initializeAuth = async () => {
+            const storedToken = localStorage.getItem('token')
+
+            if (storedToken) {
+                setToken(storedToken)
+
+                // Validate the token with the backend
+                const isValid = await validateToken(storedToken)
+
+                if (!isValid) {
+                    // Token was invalid, auth state already cleared by validateToken
+                    setLoading(false)
+                    return
+                }
+            }
+
+            setLoading(false)
         }
 
-        setLoading(false)
-    }, [])
+        initializeAuth()
+    }, [validateToken])
 
     const login = async (username, password) => {
         try {
@@ -90,10 +124,15 @@ export const AuthProvider = ({ children }) => {
     }
 
     const logout = () => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        setToken(null)
-        setUser(null)
+        clearAuth()
+    }
+
+    // Function to handle expired/invalid tokens and auto-logout on 401
+    const handleTokenExpired = (response) => {
+        if (response && response.status === 401) {
+            console.log('Token expired or invalid, logging out...')
+            clearAuth()
+        }
     }
 
     const value = {
@@ -103,7 +142,9 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         loading,
-        isAuthenticated: !!token,
+        isAuthenticated: !!token && !!user,
+        validateToken,
+        handleTokenExpired,
     }
 
     return (
