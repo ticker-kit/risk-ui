@@ -1,0 +1,79 @@
+name: risk-ui
+
+services:
+  # Risk UI Frontend
+  risk-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODE: production
+    env_file:
+      - .env.docker
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - risk-api
+    networks:
+      - risk-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Risk API (for integration)
+  risk-api:
+    image: risk-api:latest
+    ports:
+      - "10000:10000"
+    environment:
+      - ENV=docker
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/risk_db
+      - JWT_SECRET_KEY=your-secret-key-here
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - risk-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16.9-alpine
+    environment:
+      - POSTGRES_DB=risk_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - risk-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Pub/Sub
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - risk-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  risk-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 

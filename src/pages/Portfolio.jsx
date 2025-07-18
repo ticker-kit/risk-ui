@@ -27,7 +27,48 @@ function Portfolio() {
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
+  // New state for price data and refresh functionality
+  const [priceData, setPriceData] = useState({})
+  const [refreshingPrices, setRefreshingPrices] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState(null)
+
   const API_URL = import.meta.env.VITE_API_URL
+
+  // Fetch latest prices for tickers
+  const fetchLatestPrices = useCallback(async (tickers) => {
+    if (!tickers.length) return
+
+    try {
+      const pricePromises = tickers.map(async (ticker) => {
+        try {
+          const response = await fetch(`${API_URL}/latest-price/${ticker}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            return { ticker, price: data.price, timestamp: data.timestamp }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch price for ${ticker}:`, err)
+        }
+        return { ticker, price: null, timestamp: null }
+      })
+
+      const prices = await Promise.all(pricePromises)
+      const priceMap = {}
+      prices.forEach(({ ticker, price, timestamp }) => {
+        priceMap[ticker] = { price, timestamp }
+      })
+
+      setPriceData(priceMap)
+      setLastUpdated(new Date())
+    } catch (err) {
+      console.error('Failed to fetch prices:', err)
+    }
+  }, [API_URL, token])
 
   // Fetch portfolio positions
   const fetchPositions = useCallback(async () => {
@@ -49,12 +90,87 @@ function Portfolio() {
 
       const data = await response.json()
       setPositions(data)
+
+      // Also fetch latest prices for all positions
+      if (data.length > 0) {
+        const tickers = data.map(p => p.ticker)
+        await fetchLatestPrices(tickers)
+      }
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [API_URL, token, handleTokenExpired])
+  }, [API_URL, token, handleTokenExpired, fetchLatestPrices])
+
+  // Trigger price refresh for specific ticker (triggers the event-driven system)
+  const triggerPriceRefresh = async (ticker) => {
+    try {
+      setRefreshingPrices(true)
+      const response = await fetch(`${API_URL}/trigger-price-update`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ticker }),
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          handleTokenExpired(response)
+        }
+        throw new Error('Failed to trigger price update')
+      }
+
+      // Wait a moment for the async worker to process, then fetch updated price
+      setTimeout(async () => {
+        await fetchLatestPrices([ticker])
+        setSuccess(`Price refresh triggered for ${ticker}`)
+        setTimeout(() => setSuccess(null), 3000)
+      }, 2000)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setRefreshingPrices(false)
+    }
+  }
+
+  // Refresh all portfolio prices
+  const refreshAllPrices = async () => {
+    if (!positions.length) return
+
+    const tickers = positions.map(p => p.ticker)
+    try {
+      setRefreshingPrices(true)
+
+      // Trigger updates for all tickers
+      const refreshPromises = tickers.map(ticker =>
+        fetch(`${API_URL}/trigger-price-update`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ticker }),
+        })
+      )
+
+      await Promise.all(refreshPromises)
+
+      // Wait for processing then fetch all updated prices
+      setTimeout(async () => {
+        await fetchLatestPrices(tickers)
+        setSuccess('All prices refreshed successfully!')
+        setTimeout(() => setSuccess(null), 3000)
+      }, 3000)
+    } catch (error) {
+      console.error('Failed to refresh prices:', error)
+      setError('Failed to refresh prices')
+    } finally {
+      setRefreshingPrices(false)
+    }
+  }
 
   // Search tickers with debounce
   const searchTickers = async (query) => {
@@ -191,6 +307,8 @@ function Portfolio() {
     }
   }
 
+  // This function is removed since we're using the working fetchLatestPrices instead
+
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
     const query = e.target.value
@@ -256,14 +374,16 @@ function Portfolio() {
 
   useEffect(() => {
     fetchPositions()
+  }, [fetchPositions])
 
-    // Cleanup function to clear search timeout on unmount
+  // Cleanup function to clear search timeout on unmount
+  useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
       }
     }
-  }, [fetchPositions])
+  }, [])
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -389,8 +509,34 @@ function Portfolio() {
 
       {/* Portfolio Table */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold">Your Positions</h3>
+          <div className="flex items-center space-x-4">
+            {lastUpdated && (
+              <span className="text-sm text-gray-500">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+            <button
+              onClick={refreshAllPrices}
+              disabled={refreshingPrices || positions.length === 0}
+              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+            >
+              {refreshingPrices ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                  <span>Refreshing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Refresh All</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {positions.length === 0 ? (
@@ -407,6 +553,12 @@ function Portfolio() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Quantity
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Change
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -451,6 +603,25 @@ function Portfolio() {
                         </div>
                       )}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {priceData[position.ticker]?.price !== undefined ? `$${priceData[position.ticker].price.toFixed(2)}` : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {priceData[position.ticker]?.change !== undefined && (
+                          <div
+                            className={`text-sm font-medium ${priceData[position.ticker].change >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}
+                          >
+                            {priceData[position.ticker].change >= 0 ? '+' : ''}
+                            {priceData[position.ticker].change.toFixed(2)} (
+                            {priceData[position.ticker].percent_change.toFixed(2)}%)
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         {editingPosition === position.ticker ? null : (
@@ -466,6 +637,16 @@ function Portfolio() {
                           className="text-red-600 hover:text-red-900"
                         >
                           Delete
+                        </button>
+                        <button
+                          onClick={() => triggerPriceRefresh(position.ticker)}
+                          disabled={refreshingPrices}
+                          className="p-1 text-gray-400 hover:text-blue-600 disabled:opacity-50"
+                          title="Refresh price"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
                         </button>
                       </div>
                     </td>
