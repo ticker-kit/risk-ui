@@ -6,6 +6,7 @@ import Portfolio from './pages/Portfolio'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Users from './pages/Users'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -30,6 +31,9 @@ function App() {
           <Link to="/metrics" className="text-blue-600 hover:underline">Ticker Metrics</Link>
           {isAuthenticated && (
             <Link to="/portfolio" className="text-blue-600 hover:underline">Portfolio</Link>
+          )}
+          {isAuthenticated && user?.username === 'gooneraki' && (
+            <Link to="/users" className="text-blue-600 hover:underline">Users</Link>
           )}
         </div>
 
@@ -64,6 +68,11 @@ function App() {
         <Route path="/portfolio" element={
           <ProtectedRoute>
             <Portfolio />
+          </ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute>
+            <Users />
           </ProtectedRoute>
         } />
         <Route path="/login" element={<Login />} />
