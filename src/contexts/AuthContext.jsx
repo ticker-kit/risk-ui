@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AuthContext } from './AuthContext.js'
 
+
+/**
+ * @typedef {
+ * { success: true, access_token: string, token_type: string } | 
+ * { success: false, error: string }} LoginResponse
+ */
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [token, setToken] = useState(null)
@@ -24,6 +31,9 @@ export const AuthProvider = ({ children }) => {
             })
 
             if (!response.ok) {
+                if (response.status !== 401) {
+                    console.error('Token validation failed with status:', response.status)
+                }
                 // Token is invalid, clear auth state
                 clearAuth()
                 return false
@@ -68,17 +78,22 @@ export const AuthProvider = ({ children }) => {
             formData.append('username', username)
             formData.append('password', password)
 
+
+            /** @type {LoginResponse} */
             const response = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
                 method: 'POST',
                 body: formData,
             })
 
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.detail || 'Login failed')
+                throw new Error('Login service unavailable.')
             }
 
             const data = await response.json()
+
+            if (!data.success) {
+                return { success: false, error: data.error }
+            }
 
             // Store token and user info
             localStorage.setItem('token', data.access_token)
@@ -89,6 +104,7 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true }
         } catch (error) {
+            console.error('Login failed:', error)
             return { success: false, error: error.message }
         }
     }

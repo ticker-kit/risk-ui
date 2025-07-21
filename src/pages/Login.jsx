@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
+/**
+ * @typedef {{ success: true } | { success: false, error: string }} LoginResult
+ */
+
 const Login = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -16,6 +20,7 @@ const Login = () => {
         setError('')
         setLoading(true)
 
+        /** @type {LoginResult} */
         const result = await login(username, password)
 
         if (result.success) {
