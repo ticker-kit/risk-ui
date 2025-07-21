@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AuthContext } from './AuthContext.js'
 
-
 /**
- * @typedef {
- * { success: true, access_token: string, token_type: string } | 
- * { success: false, error: string }} LoginResponse
+ * @typedef {{
+ *  success: boolean,
+ *  message: string,
+ *  access_token: string | null
+ * }} AuthResponse
  */
+
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
@@ -21,6 +23,13 @@ export const AuthProvider = ({ children }) => {
         setUser(null)
     }
 
+    const setAuth = (token, user) => {
+        localStorage.setItem('token', token)
+        localStorage.setItem('user', JSON.stringify(user))
+        setToken(token)
+        setUser(user)
+    }
+
     // Function to validate token with backend
     const validateToken = useCallback(async (tokenToValidate) => {
         try {
@@ -31,10 +40,7 @@ export const AuthProvider = ({ children }) => {
             })
 
             if (!response.ok) {
-                if (response.status !== 401) {
-                    console.error('Token validation failed with status:', response.status)
-                }
-                // Token is invalid, clear auth state
+                console.error('Token validation failed, clearing auth state...')
                 clearAuth()
                 return false
             }
@@ -79,7 +85,6 @@ export const AuthProvider = ({ children }) => {
             formData.append('password', password)
 
 
-            /** @type {LoginResponse} */
             const response = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
                 method: 'POST',
                 body: formData,
@@ -89,23 +94,16 @@ export const AuthProvider = ({ children }) => {
                 throw new Error('Login service unavailable.')
             }
 
+            /** @type {AuthResponse} */
             const data = await response.json()
 
-            if (!data.success) {
-                return { success: false, error: data.error }
+            if (data.success) {
+                setAuth(data.access_token, { username })
             }
 
-            // Store token and user info
-            localStorage.setItem('token', data.access_token)
-            localStorage.setItem('user', JSON.stringify({ username }))
-
-            setToken(data.access_token)
-            setUser({ username })
-
-            return { success: true }
+            return data
         } catch (error) {
-            console.error('Login failed:', error)
-            return { success: false, error: error.message }
+            return { success: false, message: error.message }
         }
     }
 
@@ -121,21 +119,19 @@ export const AuthProvider = ({ children }) => {
             })
 
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.detail || 'Registration failed')
+                throw new Error('Registration service unavailable.')
             }
 
+            /** @type {AuthResponse} */
             const data = await response.json()
 
-            // For register, we need to login after successful registration
-            // since your API doesn't return a token on registration
-            if (data.message === "User registered successfully") {
-                return await login(username, password)
+            if (data.success) {
+                setAuth(data.access_token, { username })
             }
 
-            return { success: true }
+            return data
         } catch (error) {
-            return { success: false, error: error.message }
+            return { success: false, message: error.message }
         }
     }
 

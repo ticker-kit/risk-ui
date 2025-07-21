@@ -2,6 +2,15 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
+/**
+ * @typedef {{
+ *  success: boolean,
+ *  message: string
+ * }} AuthResult
+ */
+
+
+
 const Register = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -28,12 +37,13 @@ const Register = () => {
 
         setLoading(true)
 
+        /** @type {AuthResult} */
         const result = await register(username, password)
 
         if (result.success) {
             navigate('/')
         } else {
-            setError(result.error)
+            setError(result.message)
         }
 
         setLoading(false)
