@@ -1,7 +1,7 @@
 name: risk-ui
 
 services:
-  # Risk UI Frontend
+  # Ticker UI Frontend
   risk-ui:
     build:
       context: .
@@ -23,7 +23,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Risk API (for integration)
+  # Ticker API (for integration)
   risk-api:
     image: risk-api:latest
     ports:

@@ -1,6 +1,6 @@
 ## ✅ Pages to Build
 
-### 1. **Ticker Metrics Page (`/metrics`)**
+### 1. **Ticker Metrics Page (`/ticker`)**
 
 * Input for a single ticker
 * Show metrics in **cards**
