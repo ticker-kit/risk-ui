@@ -1,6 +1,20 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-
+/**
+ * @typedef {{
+ *  symbol: str,
+ *  shortname: str | null,
+ *  exchange: str | null,
+ *  quoteType: str | null,
+ *  longname: str | null,
+ *  index: str | null,
+ *  score: float | null,
+ *  typeDisp: str | null,
+ *  exchDisp: str | null,
+ *  isYahooFinance: boolean | null
+ * }} TickerSearchReference
+ */
 
 /**
  * @typedef {{
@@ -18,15 +32,18 @@ import { useState, useEffect, useRef } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
-function TickerMetrics() {
-    const [ticker, setTicker] = useState('')
-    const [data, setData] = useState(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+const cleanTicker = (ticker) => {
+    if (!ticker) return ''
+    return ticker.toString().replace(/\s+/g, '').toUpperCase()
+}
 
+
+function TickerMetrics() {
+    const [searchParams, setSearchParams] = useSearchParams()
 
     // Search dropdown states
     const [searchQuery, setSearchQuery] = useState('')
+    /** @type {[TickerSearchReference[], React.Dispatch<React.SetStateAction<TickerSearchReference[]>>]} */
     const [searchResults, setSearchResults] = useState([])
     const [isSearching, setIsSearching] = useState(false)
     const [showDropdown, setShowDropdown] = useState(false)
@@ -34,14 +51,28 @@ function TickerMetrics() {
     const debounceRef = useRef(null)
     const dropdownRef = useRef(null)
 
-    const fetchTickerMetrics = async () => {
+
+    // State to hold ticker and metrics data
+    const [ticker, setTicker] = useState('')
+    /** @type {[TickerMetricsResponse | null, React.Dispatch<React.SetStateAction<TickerMetricsResponse | null>>]} */
+    const [data, setData] = useState(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
+
+    const tickerUrl = searchParams.get('ticker');
+
+    const fetchTickerMetrics = async (tickerSymbol) => {
+
+
+        const cleanedTicker = cleanTicker(tickerSymbol)
+        if (!cleanedTicker) return
+
         setLoading(true)
         setData(null)
         setError(null)
 
         try {
-
-            const res = await fetch(`${API_BASE}/ticker/${ticker}`);
+            const res = await fetch(`${API_BASE}/ticker/${cleanedTicker}`);
 
             if (!res.ok) {
                 throw new Error(`Request failed with '${res.status}' '${res.statusText}' at '${res.url}'`)
@@ -56,6 +87,7 @@ function TickerMetrics() {
             } else {
                 setError(null)
                 setData(result)
+                setTicker(cleanedTicker)
             }
 
         }
@@ -66,38 +98,48 @@ function TickerMetrics() {
         setLoading(false)
     }
 
+
+    useEffect(() => {
+
+        if (tickerUrl) {
+            fetchTickerMetrics(tickerUrl);
+        }
+    }, [tickerUrl]);
+
     // Search functionality
     const searchTickers = async (query) => {
-        if (!query || query.trim().length < 1) {
-            setSearchResults([])
-            setShowDropdown(false)
-            return
-        }
+
 
         setIsSearching(true)
+
         try {
             const response = await fetch(`${API_BASE}/search_ticker?q=${encodeURIComponent(query)}`)
             if (response.ok) {
+
+                /** @type {TickerSearchReference[]} */
                 const results = await response.json()
+
                 setSearchResults(results)
-                setShowDropdown(results.length > 0)
+                setShowDropdown(true) // Always show dropdown for both results and "no results"
+                setSelectedIndex(results.length > 0 ? 0 : -1)
             } else {
                 setSearchResults([])
                 setShowDropdown(false)
+                setSelectedIndex(-1)
             }
         } catch (err) {
             console.error('Search failed:', err)
             setSearchResults([])
             setShowDropdown(false)
+            setSelectedIndex(-1)
         } finally {
             setIsSearching(false)
         }
     }
 
-    const handleSearchChange = (value) => {
-        setSearchQuery(value)
-        setTicker(value)
-        setSelectedIndex(-1)
+    const handleSearchChange = (searchValue) => {
+
+        setSearchQuery(searchValue)
 
         // Clear existing debounce
         if (debounceRef.current) {
@@ -105,46 +147,56 @@ function TickerMetrics() {
         }
 
         // Set new debounce
-        debounceRef.current = setTimeout(() => {
-            searchTickers(value)
-        }, 300)
+        if (searchValue.trim())
+            debounceRef.current = setTimeout(() => {
+                searchTickers(searchValue)
+            }, 300)
     }
 
-    const handleKeyDown = (e) => {
-        if (!showDropdown) return
-
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault()
-                setSelectedIndex(prev =>
-                    prev < searchResults.length - 1 ? prev + 1 : prev
-                )
-                break
-            case 'ArrowUp':
-                e.preventDefault()
-                setSelectedIndex(prev => prev > 0 ? prev - 1 : -1)
-                break
-            case 'Enter':
-                e.preventDefault()
-                if (selectedIndex >= 0 && searchResults[selectedIndex]) {
-                    selectTicker(searchResults[selectedIndex])
-                }
-                break
-            case 'Escape':
-                setShowDropdown(false)
-                setSelectedIndex(-1)
-                break
+    const handleFocus = () => {
+        if (searchResults.length > 0) {
+            setShowDropdown(true)
+            setSelectedIndex(0)
+        }
+        else {
+            setShowDropdown(false)
+            setSelectedIndex(-1)
         }
     }
 
-    const selectTicker = (tickerItem) => {
-        setTicker(tickerItem.symbol)
-        setSearchQuery(tickerItem.symbol)
-        setShowDropdown(false)
-        setSelectedIndex(-1)
+    const handleKeyDown = (e) => {
+
+        if (e.key === 'Escape') {
+            e.preventDefault()
+            setShowDropdown(!showDropdown)
+            setSelectedIndex(showDropdown ? 0 : -1)
+        } else if (e.key === 'ArrowDown' && selectedIndex < searchResults.length - 1) {
+            e.preventDefault()
+            setSelectedIndex(prev => Math.min(prev + 1, searchResults.length - 1))
+        } else if (e.key === 'ArrowUp' && selectedIndex > 0) {
+            e.preventDefault()
+            setSelectedIndex(prev => Math.max(prev - 1, 0))
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault()
+            selectTicker(searchResults[selectedIndex])
+        }
     }
 
-    // Close dropdown when clicking outside
+    const selectTicker = useCallback((tickerItem) => {
+
+
+        const selectedTicker = tickerItem.symbol
+
+        if (!selectedTicker) return
+
+        setTicker(selectedTicker)
+        setShowDropdown(false)
+        setSelectedIndex(-1)
+        setSearchParams({ ticker: selectedTicker })
+
+    }, [setSearchParams])
+
+    // Effect to handle clicks outside the dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -164,35 +216,27 @@ function TickerMetrics() {
         return () => {
             if (debounceRef.current) {
                 clearTimeout(debounceRef.current)
+                debounceRef.current = null
             }
         }
     }, [])
-
-
-
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        if (!ticker || ticker.trim().length === 0) return
-
-        await fetchTickerMetrics()
-
-    }
 
     return (
         <div className='max-w-xl mx-auto p-4'>
             <h2 className='text-2xl font-bold mb-4'>Ticker Metrics</h2>
 
-            <form
-                onSubmit={handleSubmit}
-                className='flex gap-2 mb-4'>
+            {error && <p className="text-red-600 mb-4">{error}</p>}
 
-                {/* Search Input with Dropdown */}
-                <div className="relative flex-1" ref={dropdownRef}>
+            {/* Search Input with Dropdown */}
+            <div className="mb-4">
+                <div className="relative" ref={dropdownRef}>
                     <input
+                        id="ticker-search"
                         type='text'
                         value={searchQuery}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        onKeyDown={handleKeyDown}
+                        onFocus={() => handleFocus()}
+                        onKeyDown={(e) => { handleKeyDown(e) }}
                         placeholder='Search for ticker (e.g., Apple, AAPL)'
                         className='border px-3 py-2 rounded w-full'
                         autoComplete="off"
@@ -205,41 +249,67 @@ function TickerMetrics() {
                         </div>
                     )}
 
+                    {/* No results message - styled like dropdown */}
+                    {showDropdown && searchResults.length === 0 && !isSearching && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                            <div className="px-3 py-2 text-gray-500 text-center">
+                                No results found
+                            </div>
+                        </div>
+                    )}
+
                     {/* Dropdown */}
                     {showDropdown && searchResults.length > 0 && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                            {searchResults.map((item, index) => (
+                            {searchResults.map((searchItem, index) => (
                                 <div
-                                    key={item.symbol}
-                                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${index === selectedIndex ? 'bg-blue-100' : ''
-                                        }`}
-                                    onClick={() => selectTicker(item)}
+                                    key={`${searchItem.symbol}${searchItem.exchDisp}`}
+                                    className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${index === selectedIndex ? 'bg-blue-100' : ''}`}
+                                    onClick={() => selectTicker(searchItem)}
                                 >
-                                    <div className="font-medium">{item.symbol}</div>
-                                    <div className="text-sm text-gray-600 truncate">{item.shortname}</div>
-                                    <div className="text-xs text-gray-500">{item.typeDisp} - {item.exchDisp}</div>
-
+                                    <div className="font-medium">{searchItem.symbol}</div>
+                                    <div className="text-sm text-gray-600 truncate">{searchItem.shortname}</div>
+                                    <div className="text-xs text-gray-500">{searchItem.typeDisp} - {searchItem.exchDisp}</div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-
-                <button
-                    type="submit"
-                    disabled={loading || !ticker}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                    {loading ? 'Loading...' : 'Fetch Metrics'}
-                </button>
-
-            </form>
-
-            {error && <p className="text-red-600 mb-4">{error}</p>}
+            </div>
 
 
 
-            {data && (
+            {/* Current Ticker Display */}
+            {ticker && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <span className="text-sm text-blue-600">Selected Ticker:</span>
+                            <span className="ml-2 text-lg font-semibold text-blue-800">{ticker}</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setTicker('')
+                                setData(null)
+                                setError(null)
+                                setSearchParams({ ticker: '' })
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {loading && (
+                <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+            )}
+
+
+            {data && !loading && (
                 <div className="bg-gray-100 p-4 rounded shadow">
                     <h4 className="font-bold mb-2">Ticker Metrics for {data.ticker}</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

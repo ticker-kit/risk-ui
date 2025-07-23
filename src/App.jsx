@@ -64,7 +64,8 @@ function App() {
             <Dashboard />
           </ProtectedRoute>
         } />
-        <Route path="/ticker" element={<TickerMetrics />} />
+        <Route path="/ticker/:ticker?" element={<TickerMetrics />} />
+
         <Route path="/portfolio" element={
           <ProtectedRoute>
             <Portfolio />
