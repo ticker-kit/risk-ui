@@ -3,29 +3,29 @@ import { useSearchParams } from 'react-router-dom'
 
 /**
  * @typedef {{
- *  symbol: str,
- *  shortname: str | null,
- *  exchange: str | null,
- *  quoteType: str | null,
- *  longname: str | null,
- *  index: str | null,
- *  score: float | null,
- *  typeDisp: str | null,
- *  exchDisp: str | null,
+ *  symbol: string,
+ *  shortname: string | null,
+ *  exchange: string | null,
+ *  quoteType: string | null,
+ *  longname: string | null,
+ *  index: string | null,
+ *  score: number | null,
+ *  typeDisp: string | null,
+ *  exchDisp: string | null,
  *  isYahooFinance: boolean | null
  * }} TickerSearchReference
  */
 
 /**
  * @typedef {{
- *  ticker: str,
- *  info: dict | null,
- *  prices: dict | null,
- *  mean_return: float | null,
- *  volatility: float | null,
- *  sharpe_ratio: float | null,
- *  max_drawdown: float | null,
- *  error_msg: str | None
+ *  ticker: string,
+ *  info: object | null,
+ *  time_series_data: object | null,
+ *  mean_return: number | null,
+ *  volatility: number | null,
+ *  sharpe_ratio: number | null,
+ *  max_drawdown: number | null,
+ *  error_msg: string | None
  * }} TickerMetricsResponse
  */
 
@@ -46,6 +46,8 @@ function TickerMetrics() {
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const debounceRef = useRef(null)
     const dropdownRef = useRef(null)
+
+
 
 
     // State to hold ticker and metrics data
