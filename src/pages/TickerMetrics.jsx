@@ -32,10 +32,6 @@ import { useSearchParams } from 'react-router-dom'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
-const cleanTicker = (ticker) => {
-    if (!ticker) return ''
-    return ticker.toString().replace(/\s+/g, '').toUpperCase()
-}
 
 
 function TickerMetrics() {
@@ -59,20 +55,18 @@ function TickerMetrics() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    const tickerUrl = searchParams.get('ticker');
+
 
     const fetchTickerMetrics = async (tickerSymbol) => {
 
 
-        const cleanedTicker = cleanTicker(tickerSymbol)
-        if (!cleanedTicker) return
 
         setLoading(true)
         setData(null)
         setError(null)
 
         try {
-            const res = await fetch(`${API_BASE}/ticker/${cleanedTicker}`);
+            const res = await fetch(`${API_BASE}/ticker/${tickerSymbol}`);
 
             if (!res.ok) {
                 throw new Error(`Request failed with '${res.status}' '${res.statusText}' at '${res.url}'`)
@@ -87,7 +81,7 @@ function TickerMetrics() {
             } else {
                 setError(null)
                 setData(result)
-                setTicker(cleanedTicker)
+                setTicker(tickerSymbol)
             }
 
         }
@@ -101,10 +95,19 @@ function TickerMetrics() {
 
     useEffect(() => {
 
+        const tickerUrl = searchParams.get('ticker');
+
         if (tickerUrl) {
             fetchTickerMetrics(tickerUrl);
         }
-    }, [tickerUrl]);
+    }, [searchParams]);
+
+    useEffect(() => {
+        // Auto remove selected index if dropdown is closed
+        if (!showDropdown) {
+            setSelectedIndex(-1)
+        }
+    }, [showDropdown]);
 
     // Search functionality
     const searchTickers = async (query) => {
@@ -125,13 +128,11 @@ function TickerMetrics() {
             } else {
                 setSearchResults([])
                 setShowDropdown(false)
-                setSelectedIndex(-1)
             }
         } catch (err) {
             console.error('Search failed:', err)
             setSearchResults([])
             setShowDropdown(false)
-            setSelectedIndex(-1)
         } finally {
             setIsSearching(false)
         }
@@ -150,17 +151,16 @@ function TickerMetrics() {
         if (searchValue.trim())
             debounceRef.current = setTimeout(() => {
                 searchTickers(searchValue)
-            }, 300)
+            }, 500)
     }
 
     const handleFocus = () => {
         if (searchResults.length > 0) {
             setShowDropdown(true)
-            setSelectedIndex(0)
+            setSelectedIndex(searchResults.findIndex(item => item.symbol === ticker))
         }
         else {
             setShowDropdown(false)
-            setSelectedIndex(-1)
         }
     }
 
@@ -191,7 +191,6 @@ function TickerMetrics() {
 
         setTicker(selectedTicker)
         setShowDropdown(false)
-        setSelectedIndex(-1)
         setSearchParams({ ticker: selectedTicker })
 
     }, [setSearchParams])
@@ -201,7 +200,6 @@ function TickerMetrics() {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowDropdown(false)
-                setSelectedIndex(-1)
             }
         }
 
