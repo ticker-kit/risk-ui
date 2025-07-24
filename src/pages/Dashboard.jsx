@@ -176,10 +176,10 @@ function Dashboard() {
                             Manage Portfolio
                         </Link>
                         <Link
-                            to="/metrics"
+                            to="/ticker"
                             className="block w-full px-4 py-2 bg-green-600 text-white text-center rounded hover:bg-green-700"
                         >
-                            Analyze Risk Metrics
+                            Analyze Ticker Metrics
                         </Link>
                     </div>
                 </div>

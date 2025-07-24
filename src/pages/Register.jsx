@@ -2,19 +2,62 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
+/**
+ * @typedef {{
+ *  success: boolean,
+ *  message: string
+ * }} AuthResult
+ */
+
+const validateUsername = (username) => {
+    // Allow only letters and numbers
+    const usernameRegex = /^[a-zA-Z0-9]+$/
+    if (!usernameRegex.test(username)) {
+        return 'Username can only contain letters and numbers'
+    }
+
+    // Minimum 3 characters
+    if (username.length < 3) {
+        return 'Username must be at least 3 characters long'
+    }
+
+    // Maximum 15 characters
+    if (username.length > 15) {
+        return 'Username must be at most 15 characters long'
+    }
+
+    return null
+}
+
 const Register = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
+    const [usernameError, setUsernameError] = useState('')
     const [loading, setLoading] = useState(false)
 
     const { register } = useAuth()
     const navigate = useNavigate()
 
+    const handleUsernameChange = (e) => {
+        const value = e.target.value
+        setUsername(value)
+
+        // Validate in real-time
+        const error = validateUsername(value)
+        setUsernameError(error || '')
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+
+        const usernameValidationError = validateUsername(username)
+        if (usernameValidationError) {
+            setUsernameError(usernameValidationError)
+            return
+        }
 
         if (password !== confirmPassword) {
             setError('Passwords do not match')
@@ -28,12 +71,13 @@ const Register = () => {
 
         setLoading(true)
 
+        /** @type {AuthResult} */
         const result = await register(username, password)
 
         if (result.success) {
             navigate('/')
         } else {
-            setError(result.error)
+            setError(result.message)
         }
 
         setLoading(false)
@@ -68,8 +112,13 @@ const Register = () => {
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                                 placeholder="Username"
                                 value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                onChange={handleUsernameChange}
                             />
+                            {usernameError && (
+                                <div className="text-red-600 text-sm mt-1">
+                                    {usernameError}
+                                </div>
+                            )}
                         </div>
                         <div>
                             <label htmlFor="password" className="sr-only">

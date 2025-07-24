@@ -1,4 +1,4 @@
-# Risk UI - Event-Driven Portfolio Management Frontend
+# Ticker UI - Event-Driven Portfolio Management Frontend
 
 A modern React frontend for managing investment portfolios with real-time price updates powered by an event-driven microservices architecture.
 
@@ -10,8 +10,8 @@ A modern React frontend for managing investment portfolios with real-time price 
 - **Portfolio Dashboard**: Overview of total value, daily changes, and performance
 - **Position Value Calculation**: Automatic calculation of position values based on latest prices
 
-### Risk Analysis
-- **Risk Metrics**: Calculate and display mean return, volatility, Sharpe ratio, and max drawdown
+### Ticker Analysis
+- **Ticker Metrics**: Calculate and display mean return, volatility, Sharpe ratio, and max drawdown
 - **Live Price Data**: Integration with latest price data from the event-driven system
 - **Ticker Search**: Search and validate ticker symbols before adding to portfolio
 
@@ -58,10 +58,10 @@ This frontend integrates with the event-driven microservices:
 - Position value calculations
 - Ticker search with autocomplete
 
-### 3. Ticker Metrics (`/metrics`)
-- Risk analysis for individual tickers
+### 3. Ticker Metrics (`/ticker`)
+- Ticker analysis for individual tickers
 - Latest price integration
-- Risk metrics visualization (Mean Return, Volatility, Sharpe Ratio, Max Drawdown)
+- Ticker metrics visualization (Mean Return, Volatility, Sharpe Ratio, Max Drawdown)
 
 ### 4. Authentication
 - Login/Register functionality
@@ -83,8 +83,8 @@ The frontend communicates with the `risk-api` using these endpoints:
 - `GET /latest-price/{ticker}` - Fetch stored price data
 - `POST /trigger-portfolio-refresh` - Refresh all portfolio prices
 
-### Risk Analysis
-- `POST /risk_metrics_from_ticker` - Calculate risk metrics
+### Ticker Analysis
+- `POST /risk_metrics_from_ticker` - Calculate Ticker metrics
 - `GET /search_ticker` - Search for ticker symbols
 
 ## 🚀 Development
@@ -266,4 +266,4 @@ rm -rf node_modules/.vite
 
 ---
 
-*Part of the Event-Driven Risk Metrics Microservices Project* 
+*Part of the Event-Driven Ticker Metrics Microservices Project* 

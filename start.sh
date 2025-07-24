@@ -1,8 +1,8 @@
 #!/bin/bash
-# Risk UI Startup Script
+# Ticker UI Startup Script
 # Usage: ./start.sh
 
-echo "🚀 Risk UI Startup"
+echo "🚀 Ticker UI Startup"
 echo ""
 
 # Check if .env.example exists

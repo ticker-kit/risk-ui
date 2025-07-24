@@ -6,6 +6,7 @@ import Portfolio from './pages/Portfolio'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Users from './pages/Users'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -24,12 +25,15 @@ function App() {
       <nav className="mb-6 flex justify-between items-center">
         <div className="space-x-4">
           <Link to="/" className="text-blue-600 hover:underline">Home</Link>
+          <Link to="/ticker" className="text-blue-600 hover:underline">Ticker Metrics</Link>
           {isAuthenticated && (
             <Link to="/dashboard" className="text-blue-600 hover:underline">Dashboard</Link>
           )}
-          <Link to="/metrics" className="text-blue-600 hover:underline">Ticker Metrics</Link>
           {isAuthenticated && (
             <Link to="/portfolio" className="text-blue-600 hover:underline">Portfolio</Link>
+          )}
+          {isAuthenticated && user?.username === 'gooneraki' && (
+            <Link to="/users" className="text-blue-600 hover:underline">Users</Link>
           )}
         </div>
 
@@ -60,10 +64,16 @@ function App() {
             <Dashboard />
           </ProtectedRoute>
         } />
-        <Route path="/metrics" element={<TickerMetrics />} />
+        <Route path="/ticker/:ticker?" element={<TickerMetrics />} />
+
         <Route path="/portfolio" element={
           <ProtectedRoute>
             <Portfolio />
+          </ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute>
+            <Users />
           </ProtectedRoute>
         } />
         <Route path="/login" element={<Login />} />

@@ -1,8 +1,8 @@
 #!/usr/bin/env pwsh
-# Risk UI Startup Script
+# Ticker UI Startup Script
 # Usage: ./start.ps1 or powershell -ExecutionPolicy Bypass -File start.ps1
 
-Write-Host "🚀 Risk UI Startup" -ForegroundColor Green
+Write-Host "🚀 Ticker UI Startup" -ForegroundColor Green
 Write-Host ""
 
 # Check if .env.example exists
