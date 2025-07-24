@@ -372,6 +372,39 @@ function TickerMetrics() {
                         </div>
                     </div>
 
+                    {/* Sample Period Information */}
+                    {data.time_series_data?.date && (
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Sample Period</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <div className="text-sm text-gray-600">First Date</div>
+                                    <div className="text-xl font-semibold text-gray-900">
+                                        {data.time_series_data.date[0]}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <div className="text-sm text-gray-600">Last Date (Reference)</div>
+                                    <div className="text-xl font-semibold text-gray-900">
+                                        {data.time_series_data.date[data.time_series_data.date.length - 1]}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <div className="text-sm text-gray-600">Total Years</div>
+                                    <div className="text-xl font-semibold text-gray-900">
+                                        {(() => {
+                                            const firstDate = new Date(data.time_series_data.date[0]);
+                                            const lastDate = new Date(data.time_series_data.date[data.time_series_data.date.length - 1]);
+                                            const diffTime = Math.abs(lastDate - firstDate);
+                                            const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+                                            return diffYears.toFixed(1);
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Historical Risk & Return Metrics */}
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Historical Risk & Return Analysis</h4>
