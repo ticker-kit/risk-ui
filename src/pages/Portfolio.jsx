@@ -34,14 +34,14 @@ function Portfolio() {
 
   const API_URL = import.meta.env.VITE_API_URL
 
-  // Fetch latest prices for tickers
+  // Fetch latest prices for tickers using the ticker metrics endpoint
   const fetchLatestPrices = useCallback(async (tickers) => {
     if (!tickers.length) return
 
     try {
       const pricePromises = tickers.map(async (ticker) => {
         try {
-          const response = await fetch(`${API_URL}/latest-price/${ticker}`, {
+          const response = await fetch(`${API_URL}/ticker/${ticker}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -49,18 +49,27 @@ function Portfolio() {
 
           if (response.ok) {
             const data = await response.json()
-            return { ticker, price: data.price, timestamp: data.timestamp }
+            if (data.info && data.info.currentPrice !== undefined) {
+              return {
+                ticker,
+                price: data.info.currentPrice,
+                previousClose: data.info.previousClose,
+                change: data.info.currentPrice - (data.info.previousClose || data.info.currentPrice),
+                percent_change: data.info.regularMarketChangePercent || 0,
+                timestamp: new Date().toISOString()
+              }
+            }
           }
         } catch (err) {
           console.error(`Failed to fetch price for ${ticker}:`, err)
         }
-        return { ticker, price: null, timestamp: null }
+        return { ticker, price: null, previousClose: null, change: null, percent_change: null, timestamp: null }
       })
 
       const prices = await Promise.all(pricePromises)
       const priceMap = {}
-      prices.forEach(({ ticker, price, timestamp }) => {
-        priceMap[ticker] = { price, timestamp }
+      prices.forEach(({ ticker, price, previousClose, change, percent_change, timestamp }) => {
+        priceMap[ticker] = { price, previousClose, change, percent_change, timestamp }
       })
 
       setPriceData(priceMap)
@@ -103,32 +112,14 @@ function Portfolio() {
     }
   }, [API_URL, token, handleTokenExpired, fetchLatestPrices])
 
-  // Trigger price refresh for specific ticker (triggers the event-driven system)
+  // Trigger price refresh for specific ticker
   const triggerPriceRefresh = async (ticker) => {
     try {
       setRefreshingPrices(true)
-      const response = await fetch(`${API_URL}/trigger-price-update`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ticker }),
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleTokenExpired(response)
-        }
-        throw new Error('Failed to trigger price update')
-      }
-
-      // Wait a moment for the async worker to process, then fetch updated price
-      setTimeout(async () => {
-        await fetchLatestPrices([ticker])
-        setSuccess(`Price refresh triggered for ${ticker}`)
-        setTimeout(() => setSuccess(null), 3000)
-      }, 2000)
+      // Since we don't have a trigger endpoint, just fetch the latest data directly
+      await fetchLatestPrices([ticker])
+      setSuccess(`Price refreshed for ${ticker}`)
+      setTimeout(() => setSuccess(null), 3000)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -143,27 +134,9 @@ function Portfolio() {
     const tickers = positions.map(p => p.ticker)
     try {
       setRefreshingPrices(true)
-
-      // Trigger updates for all tickers
-      const refreshPromises = tickers.map(ticker =>
-        fetch(`${API_URL}/trigger-price-update`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ticker }),
-        })
-      )
-
-      await Promise.all(refreshPromises)
-
-      // Wait for processing then fetch all updated prices
-      setTimeout(async () => {
-        await fetchLatestPrices(tickers)
-        setSuccess('All prices refreshed successfully!')
-        setTimeout(() => setSuccess(null), 3000)
-      }, 3000)
+      await fetchLatestPrices(tickers)
+      setSuccess('All prices refreshed successfully!')
+      setTimeout(() => setSuccess(null), 3000)
     } catch (error) {
       console.error('Failed to refresh prices:', error)
       setError('Failed to refresh prices')
@@ -605,20 +578,24 @@ function Portfolio() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {priceData[position.ticker]?.price !== undefined ? `$${priceData[position.ticker].price.toFixed(2)}` : 'N/A'}
+                        {priceData[position.ticker]?.price !== null && priceData[position.ticker]?.price !== undefined
+                          ? `$${priceData[position.ticker].price.toFixed(2)}`
+                          : 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {priceData[position.ticker]?.change !== undefined && (
+                        {priceData[position.ticker]?.change !== null && priceData[position.ticker]?.change !== undefined ? (
                           <div
                             className={`text-sm font-medium ${priceData[position.ticker].change >= 0 ? 'text-green-600' : 'text-red-600'
                               }`}
                           >
                             {priceData[position.ticker].change >= 0 ? '+' : ''}
                             {priceData[position.ticker].change.toFixed(2)} (
-                            {priceData[position.ticker].percent_change.toFixed(2)}%)
+                            {(priceData[position.ticker].percent_change * 100).toFixed(2)}%)
                           </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">N/A</div>
                         )}
                       </div>
                     </td>
