@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 /**
  * @typedef {{
@@ -401,6 +402,75 @@ function TickerMetrics() {
                                         })()}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Price Chart */}
+                    {data.time_series_data?.date && data.time_series_data?.close && (
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Price Chart</h4>
+                            <div className="h-96">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart
+                                        data={data.time_series_data.date.map((date, index) => ({
+                                            date: new Date(date),
+                                            close: data.time_series_data.close[index],
+                                            closeFitted: data.time_series_data.close_fitted?.[index]
+                                        }))}
+                                        margin={{
+                                            top: 5,
+                                            right: 30,
+                                            left: 20,
+                                            bottom: 5,
+                                        }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="date"
+                                            type="number"
+                                            scale="time"
+                                            domain={['dataMin', 'dataMax']}
+                                            tickFormatter={(value) => value.toLocaleDateString()}
+                                            tick={{ fontSize: 12 }}
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 12 }}
+                                            domain={['dataMin', 'dataMax']}
+                                            tickFormatter={(value) => value.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        />
+                                        <Tooltip
+                                            labelFormatter={(value) => `Date: ${value.toLocaleDateString()}`}
+                                            formatter={(value, name) => [
+                                                `${value?.toFixed(2)} ${data.info?.currency || ''}`,
+                                                name === 'close' ? 'Actual Price' : 'Exp Fitted Price'
+                                            ]}
+                                        />
+                                        <Legend
+                                            formatter={(value) => value === 'close' ? 'Actual Price' : 'Exp Fitted Price'}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="close"
+                                            stroke="#2563eb"
+                                            strokeWidth={2}
+                                            dot={false}
+                                            name="close"
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="closeFitted"
+                                            stroke="#dc2626"
+                                            strokeWidth={2}
+                                            strokeDasharray="5 5"
+                                            dot={false}
+                                            name="closeFitted"
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
                     )}
