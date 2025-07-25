@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import PriceChart from '../components/PriceChart'
 
 /**
  * @typedef {{
@@ -69,71 +69,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 
 const API_BASE = import.meta.env.VITE_API_URL
-
-// Memoized chart component to prevent unnecessary re-renders
-const PriceChart = memo(({
-    chartData,
-    xAxisFormatter,
-    yAxisFormatter
-}) => {
-    return (
-        <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-                data={chartData}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                    dataKey="date"
-                    type="number"
-                    scale="time"
-                    domain={['dataMin', 'dataMax']}
-                    tickFormatter={xAxisFormatter}
-                    tick={{ fontSize: 12 }}
-                />
-                <YAxis
-                    tick={{ fontSize: 12 }}
-                    domain={['dataMin', 'dataMax']}
-                    tickFormatter={yAxisFormatter}
-                />
-                <Tooltip
-                    labelFormatter={xAxisFormatter}
-                    formatter={(value, name) => [
-                        yAxisFormatter(value),
-                        name === 'close' ? 'Actual Price' : 'Fitted Price'
-                    ]}
-                />
-                <Legend
-                    formatter={(value) => value === 'close' ? 'Actual Price' : 'Fitted Price'}
-                />
-                <Line
-                    type="monotone"
-                    dataKey="close"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    dot={false}
-                    name="close"
-                />
-                <Line
-                    type="monotone"
-                    dataKey="closeFitted"
-                    stroke="#dc2626"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={false}
-                    name="closeFitted"
-                />
-            </LineChart>
-        </ResponsiveContainer>
-    );
-});
-
-PriceChart.displayName = 'PriceChart';
 
 function TickerMetrics() {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -484,20 +419,6 @@ function TickerMetrics() {
                         </div>
                     )}
 
-                    {/* Price Chart */}
-                    {chartData.length > 0 && (
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Price Chart</h4>
-                            <div className="h-96">
-                                <PriceChart
-                                    chartData={chartData}
-                                    xAxisFormatter={xAxisFormatter}
-                                    yAxisFormatter={yAxisFormatter}
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     {/* Historical Risk & Return Metrics */}
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Historical Risk & Return Analysis</h4>
@@ -566,13 +487,19 @@ function TickerMetrics() {
                                         <div className="bg-gray-50 p-3 rounded">
                                             <div className="text-sm text-gray-600">Actual Price</div>
                                             <div className="text-lg font-semibold">
-                                                {data.time_series_data.close?.[data.time_series_data.close.length - 1]?.toFixed(2)} {data.info?.currency}
+                                                {data.time_series_data.close?.[data.time_series_data.close.length - 1]?.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })} {data.info?.currency}
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 p-3 rounded">
                                             <div className="text-sm text-gray-600">Model Fitted Price</div>
                                             <div className="text-lg font-semibold">
-                                                {data.time_series_data.close_fitted?.[data.time_series_data.close_fitted.length - 1]?.toFixed(2)} {data.info?.currency}
+                                                {data.time_series_data.close_fitted?.[data.time_series_data.close_fitted.length - 1]?.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })} {data.info?.currency}
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 p-3 rounded">
@@ -583,7 +510,7 @@ function TickerMetrics() {
                                                     ? 'text-yellow-600'
                                                     : 'text-green-600'
                                                 }`}>
-                                                {data.time_series_data.long_term_deviation_z?.[data.time_series_data.long_term_deviation_z.length - 1]?.toFixed(3)}
+                                                {data.time_series_data.long_term_deviation_z?.[data.time_series_data.long_term_deviation_z.length - 1]?.toFixed(2)}
                                             </div>
                                         </div>
                                     </div>
@@ -640,7 +567,19 @@ function TickerMetrics() {
                         </div>
                     )}
 
-
+                    {/* Price Chart */}
+                    {chartData.length > 0 && (
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Price Chart</h4>
+                            <div className="h-96">
+                                <PriceChart
+                                    chartData={chartData}
+                                    xAxisFormatter={xAxisFormatter}
+                                    yAxisFormatter={yAxisFormatter}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Business Summary */}
                     {data.info?.longBusinessSummary && (
@@ -701,12 +640,21 @@ function TickerMetrics() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="bg-gray-50 p-3 rounded">
                                 <div className="text-sm text-gray-600">Previous Close</div>
-                                <div className="text-lg font-semibold">{data.info?.previousClose?.toFixed(2)} {data.info?.currency}</div>
+                                <div className="text-lg font-semibold">{data.info?.previousClose?.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })} {data.info?.currency}</div>
                             </div>
                             <div className="bg-gray-50 p-3 rounded">
                                 <div className="text-sm text-gray-600">52W Range</div>
                                 <div className="text-lg font-semibold">
-                                    {data.info?.fiftyTwoWeekLow?.toFixed(2)} - {data.info?.fiftyTwoWeekHigh?.toFixed(2)}
+                                    {data.info?.fiftyTwoWeekLow?.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })} - {data.info?.fiftyTwoWeekHigh?.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </div>
                             </div>
                             <div className="bg-gray-50 p-3 rounded">
