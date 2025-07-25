@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import PriceChart from '../components/PriceChart'
 
 /**
  * @typedef {{
@@ -70,8 +70,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 const API_BASE = import.meta.env.VITE_API_URL
 
-
-
 function TickerMetrics() {
     const [searchParams, setSearchParams] = useSearchParams()
 
@@ -85,9 +83,6 @@ function TickerMetrics() {
     const debounceRef = useRef(null)
     const dropdownRef = useRef(null)
 
-
-
-
     // State to hold ticker and metrics data
     const [ticker, setTicker] = useState('')
     /** @type {[TickerMetricsResponse | null, React.Dispatch<React.SetStateAction<TickerMetricsResponse | null>>]} */
@@ -95,11 +90,7 @@ function TickerMetrics() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-
-
     const fetchTickerMetrics = async (tickerSymbol) => {
-
-
 
         setLoading(true)
         setData(null)
@@ -120,6 +111,7 @@ function TickerMetrics() {
                 setData(null)
             } else {
                 setError(null)
+                result.time_series_data.date = result.time_series_data.date.map(date => new Date(date));
                 setData(result)
                 setTicker(tickerSymbol)
             }
@@ -151,7 +143,6 @@ function TickerMetrics() {
 
     // Search functionality
     const searchTickers = async (query) => {
-
 
         setIsSearching(true)
 
@@ -224,7 +215,6 @@ function TickerMetrics() {
 
     const selectTicker = useCallback((tickerItem) => {
 
-
         const selectedTicker = tickerItem.symbol
 
         if (!selectedTicker) return
@@ -234,6 +224,29 @@ function TickerMetrics() {
         setSearchParams({ ticker: selectedTicker })
 
     }, [setSearchParams])
+
+    // Memoize the chart data transformation to avoid recalculating on every render
+    const chartData = useMemo(() => {
+        if (!data?.time_series_data?.date) {
+            return [];
+        }
+
+        const result = data.time_series_data.date.map((date, index) => ({
+            date: date,
+            close: data.time_series_data.close[index],
+            closeFitted: data.time_series_data.close_fitted?.[index]
+        }));
+
+        return result;
+    }, [data]);
+
+    // Memoize chart formatters to avoid creating new functions on every render
+    const xAxisFormatter = useCallback((value) => value.toLocaleDateString(), []);
+
+    const yAxisFormatter = useCallback((value) => value.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }), []);
 
     // Effect to handle clicks outside the dropdown
     useEffect(() => {
@@ -381,96 +394,27 @@ function TickerMetrics() {
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <div className="text-sm text-gray-600">First Date</div>
                                     <div className="text-xl font-semibold text-gray-900">
-                                        {data.time_series_data.date[0]}
+                                        {data.time_series_data.date[0].toLocaleDateString()}
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <div className="text-sm text-gray-600">Last Date (Reference)</div>
                                     <div className="text-xl font-semibold text-gray-900">
-                                        {data.time_series_data.date[data.time_series_data.date.length - 1]}
+                                        {data.time_series_data.date[data.time_series_data.date.length - 1].toLocaleDateString()}
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <div className="text-sm text-gray-600">Total Years</div>
                                     <div className="text-xl font-semibold text-gray-900">
                                         {(() => {
-                                            const firstDate = new Date(data.time_series_data.date[0]);
-                                            const lastDate = new Date(data.time_series_data.date[data.time_series_data.date.length - 1]);
+                                            const firstDate = data.time_series_data.date[0];
+                                            const lastDate = data.time_series_data.date[data.time_series_data.date.length - 1];
                                             const diffTime = Math.abs(lastDate - firstDate);
                                             const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
                                             return diffYears.toFixed(1);
                                         })()}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Price Chart */}
-                    {data.time_series_data?.date && data.time_series_data?.close && (
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Price Chart</h4>
-                            <div className="h-96">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart
-                                        data={data.time_series_data.date.map((date, index) => ({
-                                            date: new Date(date),
-                                            close: data.time_series_data.close[index],
-                                            closeFitted: data.time_series_data.close_fitted?.[index]
-                                        }))}
-                                        margin={{
-                                            top: 5,
-                                            right: 30,
-                                            left: 20,
-                                            bottom: 5,
-                                        }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis
-                                            dataKey="date"
-                                            type="number"
-                                            scale="time"
-                                            domain={['dataMin', 'dataMax']}
-                                            tickFormatter={(value) => value.toLocaleDateString()}
-                                            tick={{ fontSize: 12 }}
-                                        />
-                                        <YAxis
-                                            tick={{ fontSize: 12 }}
-                                            domain={['dataMin', 'dataMax']}
-                                            tickFormatter={(value) => value.toLocaleString(undefined, {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            })}
-                                        />
-                                        <Tooltip
-                                            labelFormatter={(value) => `Date: ${value.toLocaleDateString()}`}
-                                            formatter={(value, name) => [
-                                                `${value?.toFixed(2)} ${data.info?.currency || ''}`,
-                                                name === 'close' ? 'Actual Price' : 'Exp Fitted Price'
-                                            ]}
-                                        />
-                                        <Legend
-                                            formatter={(value) => value === 'close' ? 'Actual Price' : 'Exp Fitted Price'}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="close"
-                                            stroke="#2563eb"
-                                            strokeWidth={2}
-                                            dot={false}
-                                            name="close"
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="closeFitted"
-                                            stroke="#dc2626"
-                                            strokeWidth={2}
-                                            strokeDasharray="5 5"
-                                            dot={false}
-                                            name="closeFitted"
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
                             </div>
                         </div>
                     )}
@@ -524,7 +468,7 @@ function TickerMetrics() {
                             <div className="flex items-center justify-between mb-4">
                                 <h4 className="text-lg font-semibold text-gray-900">Current Performance & Risk Analysis</h4>
                                 <div className="text-sm text-gray-500">
-                                    As of: {data.time_series_data.date?.[data.time_series_data.date.length - 1]}
+                                    As of: {data.time_series_data.date?.[data.time_series_data.date.length - 1]?.toLocaleDateString()}
                                 </div>
                             </div>
 
@@ -543,13 +487,19 @@ function TickerMetrics() {
                                         <div className="bg-gray-50 p-3 rounded">
                                             <div className="text-sm text-gray-600">Actual Price</div>
                                             <div className="text-lg font-semibold">
-                                                {data.time_series_data.close?.[data.time_series_data.close.length - 1]?.toFixed(2)} {data.info?.currency}
+                                                {data.time_series_data.close?.[data.time_series_data.close.length - 1]?.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })} {data.info?.currency}
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 p-3 rounded">
                                             <div className="text-sm text-gray-600">Model Fitted Price</div>
                                             <div className="text-lg font-semibold">
-                                                {data.time_series_data.close_fitted?.[data.time_series_data.close_fitted.length - 1]?.toFixed(2)} {data.info?.currency}
+                                                {data.time_series_data.close_fitted?.[data.time_series_data.close_fitted.length - 1]?.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })} {data.info?.currency}
                                             </div>
                                         </div>
                                         <div className="bg-gray-50 p-3 rounded">
@@ -560,7 +510,7 @@ function TickerMetrics() {
                                                     ? 'text-yellow-600'
                                                     : 'text-green-600'
                                                 }`}>
-                                                {data.time_series_data.long_term_deviation_z?.[data.time_series_data.long_term_deviation_z.length - 1]?.toFixed(3)}
+                                                {data.time_series_data.long_term_deviation_z?.[data.time_series_data.long_term_deviation_z.length - 1]?.toFixed(2)}
                                             </div>
                                         </div>
                                     </div>
@@ -617,7 +567,19 @@ function TickerMetrics() {
                         </div>
                     )}
 
-
+                    {/* Price Chart */}
+                    {chartData.length > 0 && (
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-4">Price Chart</h4>
+                            <div className="h-96">
+                                <PriceChart
+                                    chartData={chartData}
+                                    xAxisFormatter={xAxisFormatter}
+                                    yAxisFormatter={yAxisFormatter}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Business Summary */}
                     {data.info?.longBusinessSummary && (
@@ -678,12 +640,21 @@ function TickerMetrics() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="bg-gray-50 p-3 rounded">
                                 <div className="text-sm text-gray-600">Previous Close</div>
-                                <div className="text-lg font-semibold">{data.info?.previousClose?.toFixed(2)} {data.info?.currency}</div>
+                                <div className="text-lg font-semibold">{data.info?.previousClose?.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })} {data.info?.currency}</div>
                             </div>
                             <div className="bg-gray-50 p-3 rounded">
                                 <div className="text-sm text-gray-600">52W Range</div>
                                 <div className="text-lg font-semibold">
-                                    {data.info?.fiftyTwoWeekLow?.toFixed(2)} - {data.info?.fiftyTwoWeekHigh?.toFixed(2)}
+                                    {data.info?.fiftyTwoWeekLow?.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })} - {data.info?.fiftyTwoWeekHigh?.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </div>
                             </div>
                             <div className="bg-gray-50 p-3 rounded">
