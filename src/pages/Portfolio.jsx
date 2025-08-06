@@ -1,413 +1,448 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 function Portfolio() {
-  const { token, handleTokenExpired } = useAuth()
-  const searchTimeoutRef = useRef(null)
-  const [positions, setPositions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null)
+  const { token, handleTokenExpired } = useAuth();
+  const searchTimeoutRef = useRef(null);
+  const [positions, setPositions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   // Form state for adding new position
-  const [newTicker, setNewTicker] = useState('')
-  const [newQuantity, setNewQuantity] = useState('')
-  const [quantityError, setQuantityError] = useState(null)
-  const [addingPosition, setAddingPosition] = useState(false)
+  const [newTicker, setNewTicker] = useState("");
+  const [newQuantity, setNewQuantity] = useState("");
+  const [quantityError, setQuantityError] = useState(null);
+  const [addingPosition, setAddingPosition] = useState(false);
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   // Edit state
-  const [editingPosition, setEditingPosition] = useState(null)
-  const [editQuantity, setEditQuantity] = useState('')
+  const [editingPosition, setEditingPosition] = useState(null);
+  const [editQuantity, setEditQuantity] = useState("");
 
   // Delete confirmation state
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   // New state for price data and refresh functionality
-  const [priceData, setPriceData] = useState({})
-  const [refreshingPrices, setRefreshingPrices] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [priceData, setPriceData] = useState({});
+  const [refreshingPrices, setRefreshingPrices] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Fetch latest prices for tickers using the ticker metrics endpoint
-  const fetchLatestPrices = useCallback(async (tickers) => {
-    if (!tickers.length) return
+  const fetchLatestPrices = useCallback(
+    async (tickers) => {
+      if (!tickers.length) return;
 
-    try {
-      const pricePromises = tickers.map(async (ticker) => {
-        try {
-          const response = await fetch(`${API_URL}/ticker/${ticker}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          })
+      try {
+        const pricePromises = tickers.map(async (ticker) => {
+          try {
+            const response = await fetch(`${API_URL}/ticker/${ticker}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
 
-          if (response.ok) {
-            const data = await response.json()
-            if (data.info && data.info.currentPrice !== undefined) {
-              return {
-                ticker,
-                price: data.info.currentPrice,
-                previousClose: data.info.previousClose,
-                change: data.info.currentPrice - (data.info.previousClose || data.info.currentPrice),
-                percent_change: data.info.regularMarketChangePercent || 0,
-                timestamp: new Date().toISOString()
+            if (response.ok) {
+              const data = await response.json();
+              if (data.info && data.info.currentPrice !== undefined) {
+                return {
+                  ticker,
+                  price: data.info.currentPrice,
+                  previousClose: data.info.previousClose,
+                  change:
+                    data.info.currentPrice -
+                    (data.info.previousClose || data.info.currentPrice),
+                  percent_change: data.info.regularMarketChangePercent || 0,
+                  timestamp: new Date().toISOString(),
+                };
               }
             }
+          } catch (err) {
+            console.error(`Failed to fetch price for ${ticker}:`, err);
           }
-        } catch (err) {
-          console.error(`Failed to fetch price for ${ticker}:`, err)
-        }
-        return { ticker, price: null, previousClose: null, change: null, percent_change: null, timestamp: null }
-      })
+          return {
+            ticker,
+            price: null,
+            previousClose: null,
+            change: null,
+            percent_change: null,
+            timestamp: null,
+          };
+        });
 
-      const prices = await Promise.all(pricePromises)
-      const priceMap = {}
-      prices.forEach(({ ticker, price, previousClose, change, percent_change, timestamp }) => {
-        priceMap[ticker] = { price, previousClose, change, percent_change, timestamp }
-      })
+        const prices = await Promise.all(pricePromises);
+        const priceMap = {};
+        prices.forEach(
+          ({
+            ticker,
+            price,
+            previousClose,
+            change,
+            percent_change,
+            timestamp,
+          }) => {
+            priceMap[ticker] = {
+              price,
+              previousClose,
+              change,
+              percent_change,
+              timestamp,
+            };
+          }
+        );
 
-      setPriceData(priceMap)
-      setLastUpdated(new Date())
-    } catch (err) {
-      console.error('Failed to fetch prices:', err)
-    }
-  }, [API_URL, token])
+        setPriceData(priceMap);
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.error("Failed to fetch prices:", err);
+      }
+    },
+    [API_URL, token]
+  );
 
   // Fetch portfolio positions
   const fetchPositions = useCallback(async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await fetch(`${API_URL}/portfolio`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
       if (!response.ok) {
         // Only auto-logout on 401, let other errors be handled normally
         if (response.status === 401) {
-          handleTokenExpired(response)
+          handleTokenExpired(response);
         }
-        throw new Error('Failed to fetch portfolio')
+        throw new Error("Failed to fetch portfolio");
       }
 
-      const data = await response.json()
-      setPositions(data)
+      const data = await response.json();
+      setPositions(data);
 
       // Also fetch latest prices for all positions
       if (data.length > 0) {
-        const tickers = data.map(p => p.ticker)
-        await fetchLatestPrices(tickers)
+        const tickers = data.map((p) => p.ticker);
+        await fetchLatestPrices(tickers);
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [API_URL, token, handleTokenExpired, fetchLatestPrices])
+  }, [API_URL, token, handleTokenExpired, fetchLatestPrices]);
 
   // Trigger price refresh for specific ticker
   const triggerPriceRefresh = async (ticker) => {
     try {
-      setRefreshingPrices(true)
+      setRefreshingPrices(true);
       // Since we don't have a trigger endpoint, just fetch the latest data directly
-      await fetchLatestPrices([ticker])
-      setSuccess(`Price refreshed for ${ticker}`)
-      setTimeout(() => setSuccess(null), 3000)
+      await fetchLatestPrices([ticker]);
+      setSuccess(`Price refreshed for ${ticker}`);
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setRefreshingPrices(false)
+      setRefreshingPrices(false);
     }
-  }
+  };
 
   // Refresh all portfolio prices
   const refreshAllPrices = async () => {
-    if (!positions.length) return
+    if (!positions.length) return;
 
-    const tickers = positions.map(p => p.ticker)
+    const tickers = positions.map((p) => p.ticker);
     try {
-      setRefreshingPrices(true)
-      await fetchLatestPrices(tickers)
-      setSuccess('All prices refreshed successfully!')
-      setTimeout(() => setSuccess(null), 3000)
+      setRefreshingPrices(true);
+      await fetchLatestPrices(tickers);
+      setSuccess("All prices refreshed successfully!");
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      console.error('Failed to refresh prices:', error)
-      setError('Failed to refresh prices')
+      console.error("Failed to refresh prices:", error);
+      setError("Failed to refresh prices");
     } finally {
-      setRefreshingPrices(false)
+      setRefreshingPrices(false);
     }
-  }
+  };
 
   // Search tickers with debounce
   const searchTickers = async (query) => {
     if (!query.trim()) {
-      setSearchResults([])
-      setShowSearchDropdown(false)
-      return
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
     }
 
     try {
-      setSearchLoading(true)
-      const response = await fetch(`${API_URL}/search_ticker?q=${encodeURIComponent(query)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
+      setSearchLoading(true);
+      const response = await fetch(
+        `${API_URL}/search_ticker?q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         if (response.status === 401) {
-          handleTokenExpired(response)
+          handleTokenExpired(response);
         }
-        throw new Error('Failed to search tickers')
+        throw new Error("Failed to search tickers");
       }
 
-      const data = await response.json()
-      setSearchResults(data)
-      setShowSearchDropdown(data.length > 0)
+      const data = await response.json();
+      setSearchResults(data);
+      setShowSearchDropdown(data.length > 0);
     } catch (err) {
-      console.error('Search error:', err)
-      setSearchResults([])
-      setShowSearchDropdown(false)
+      console.error("Search error:", err);
+      setSearchResults([]);
+      setShowSearchDropdown(false);
     } finally {
-      setSearchLoading(false)
+      setSearchLoading(false);
     }
-  }
+  };
 
   // Add new position
   const addPosition = async (e) => {
-    e.preventDefault()
-    if (!newTicker.trim() || !newQuantity) return
+    e.preventDefault();
+    if (!newTicker.trim() || !newQuantity) return;
 
     try {
-      setAddingPosition(true)
-      setError(null)
+      setAddingPosition(true);
+      setError(null);
 
       const response = await fetch(`${API_URL}/portfolio`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ticker: newTicker.trim(),
           quantity: parseFloat(newQuantity),
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         if (response.status === 401) {
-          handleTokenExpired(response)
+          handleTokenExpired(response);
         }
-        throw new Error(errorData.detail || 'Failed to add position')
+        throw new Error(errorData.detail || "Failed to add position");
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
-      setPositions(prev => [...prev, data])
+      setPositions((prev) => [...prev, data]);
 
-      setNewTicker('')
-      setNewQuantity('')
-      setSearchQuery('')
-      setSearchResults([])
-      setShowSearchDropdown(false)
-      setSuccess('Position added successfully!')
-      setTimeout(() => setSuccess(null), 3000)
+      setNewTicker("");
+      setNewQuantity("");
+      setSearchQuery("");
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      setSuccess("Position added successfully!");
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setAddingPosition(false)
+      setAddingPosition(false);
     }
-  }
+  };
 
   const handleQuantityChange = (e) => {
-    const value = e.target.value
+    const value = e.target.value;
 
-    if (value === '') {
-      setNewQuantity('')
-      setQuantityError(null)
-      return
+    if (value === "") {
+      setNewQuantity("");
+      setQuantityError(null);
+      return;
     }
 
-    setNewQuantity(value)
+    setNewQuantity(value);
 
     if (isNaN(value) || value <= 0 || value > 1000000) {
-      setQuantityError('Quantity must be a positive number between 1 and 1,000,000.')
+      setQuantityError(
+        "Quantity must be a positive number between 1 and 1,000,000."
+      );
     } else {
-      setQuantityError(null)
+      setQuantityError(null);
     }
-  }
+  };
 
   // Update position quantity
   const updatePosition = async (symbol, quantity) => {
     try {
-      setError(null)
-      const response = await fetch(`${API_URL}/portfolio/${symbol}?quantity=${quantity}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
+      setError(null);
+      const response = await fetch(
+        `${API_URL}/portfolio/${symbol}?quantity=${quantity}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         if (response.status === 401) {
-          handleTokenExpired(response)
+          handleTokenExpired(response);
         }
-        throw new Error(errorData.detail || 'Failed to update position')
+        throw new Error(errorData.detail || "Failed to update position");
       }
 
-      await fetchPositions()
-      setEditingPosition(null)
-      setSuccess('Position updated successfully!')
-      setTimeout(() => setSuccess(null), 3000)
+      await fetchPositions();
+      setEditingPosition(null);
+      setSuccess("Position updated successfully!");
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     }
-  }
+  };
 
   // Delete position
   const deletePosition = async (symbol) => {
     try {
-      setError(null)
+      setError(null);
       const response = await fetch(`${API_URL}/portfolio/${symbol}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         if (response.status === 401) {
-          handleTokenExpired(response)
+          handleTokenExpired(response);
         }
-        throw new Error(errorData.detail || 'Failed to delete position')
+        throw new Error(errorData.detail || "Failed to delete position");
       }
 
-      await fetchPositions()
-      setDeleteConfirm(null)
-      setSuccess('Position deleted successfully!')
-      setTimeout(() => setSuccess(null), 3000)
+      await fetchPositions();
+      setDeleteConfirm(null);
+      setSuccess("Position deleted successfully!");
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     }
-  }
+  };
 
   // This function is removed since we're using the working fetchLatestPrices instead
 
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
-    const query = e.target.value
-    setSearchQuery(query)
-    setNewTicker(query)
+    const query = e.target.value;
+    setSearchQuery(query);
+    setNewTicker(query);
 
     // Clear previous timeout
     if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
+      clearTimeout(searchTimeoutRef.current);
     }
 
     // If query is empty, immediately hide dropdown
     if (!query.trim()) {
-      setSearchResults([])
-      setShowSearchDropdown(false)
-      return
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
     }
 
     // Set new timeout for debounced search
     searchTimeoutRef.current = setTimeout(() => {
-      searchTickers(query)
-    }, 300) // 300ms debounce delay
-  }
+      searchTickers(query);
+    }, 300); // 300ms debounce delay
+  };
 
   // Handle search result selection
   const handleSearchSelect = (ticker) => {
     // Clear any pending search timeout
     if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
+      clearTimeout(searchTimeoutRef.current);
     }
 
-    setNewTicker(ticker.symbol)
-    setSearchQuery(ticker.symbol)
-    setShowSearchDropdown(false)
-    setSearchResults([])
-  }
+    setNewTicker(ticker.symbol);
+    setSearchQuery(ticker.symbol);
+    setShowSearchDropdown(false);
+    setSearchResults([]);
+  };
 
   // Handle edit start
   const startEdit = (position) => {
-    setEditingPosition(position.ticker)
-    setEditQuantity(position.quantity.toString())
-  }
+    setEditingPosition(position.ticker);
+    setEditQuantity(position.quantity.toString());
+  };
 
   // Handle edit save
   const saveEdit = () => {
     if (editingPosition && editQuantity) {
-      updatePosition(editingPosition, parseFloat(editQuantity))
+      updatePosition(editingPosition, parseFloat(editQuantity));
     }
-  }
+  };
 
   // Handle keyboard navigation in search
   const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      setShowSearchDropdown(false)
+    if (e.key === "Escape") {
+      setShowSearchDropdown(false);
     }
-  }
+  };
 
   // Handle edit cancel
   const cancelEdit = () => {
-    setEditingPosition(null)
-    setEditQuantity('')
-  }
+    setEditingPosition(null);
+    setEditQuantity("");
+  };
 
   useEffect(() => {
-    fetchPositions()
-  }, [fetchPositions])
+    fetchPositions();
+  }, [fetchPositions]);
 
   // Cleanup function to clear search timeout on unmount
   useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
+        clearTimeout(searchTimeoutRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.ticker-search-container')) {
-        setShowSearchDropdown(false)
+      if (!event.target.closest(".ticker-search-container")) {
+        setShowSearchDropdown(false);
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Clear messages after 3 seconds
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(null), 5000)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
     }
-  }, [error])
+  }, [error]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
         <div className="text-lg">Loading portfolio...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -435,7 +470,10 @@ function Portfolio() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Ticker Search Input */}
             <div className="relative ticker-search-container">
-              <label htmlFor="ticker" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="ticker"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Ticker Symbol
               </label>
               <input
@@ -460,7 +498,11 @@ function Portfolio() {
                       className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
                     >
                       <div className="font-medium">{ticker.symbol}</div>
-                      <div className="text-sm text-gray-600">{ticker.shortname || ticker.longname || 'No name available'}</div>
+                      <div className="text-sm text-gray-600">
+                        {ticker.shortname ||
+                          ticker.longname ||
+                          "No name available"}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -475,7 +517,10 @@ function Portfolio() {
 
             {/* Quantity Input */}
             <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="quantity"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Quantity
               </label>
               <input
@@ -498,10 +543,15 @@ function Portfolio() {
 
           <button
             type="submit"
-            disabled={addingPosition || !newTicker.trim() || !newQuantity || quantityError}
+            disabled={
+              addingPosition ||
+              !newTicker.trim() ||
+              !newQuantity ||
+              quantityError
+            }
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {addingPosition ? 'Adding...' : 'Add Position'}
+            {addingPosition ? "Adding..." : "Add Position"}
           </button>
         </form>
       </div>
@@ -528,8 +578,18 @@ function Portfolio() {
                 </>
               ) : (
                 <>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
                   </svg>
                   <span>Refresh All</span>
                 </>
@@ -604,21 +664,29 @@ function Portfolio() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {priceData[position.ticker]?.price !== null && priceData[position.ticker]?.price !== undefined
+                        {priceData[position.ticker]?.price !== null &&
+                        priceData[position.ticker]?.price !== undefined
                           ? `$${priceData[position.ticker].price.toFixed(2)}`
-                          : 'N/A'}
+                          : "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {priceData[position.ticker]?.change !== null && priceData[position.ticker]?.change !== undefined ? (
+                        {priceData[position.ticker]?.change !== null &&
+                        priceData[position.ticker]?.change !== undefined ? (
                           <div
-                            className={`text-sm font-medium ${priceData[position.ticker].change >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}
+                            className={`text-sm font-medium ${
+                              priceData[position.ticker].change >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
                           >
-                            {priceData[position.ticker].change >= 0 ? '+' : ''}
+                            {priceData[position.ticker].change >= 0 ? "+" : ""}
                             {priceData[position.ticker].change.toFixed(2)} (
-                            {(priceData[position.ticker].percent_change * 100).toFixed(2)}%)
+                            {(
+                              priceData[position.ticker].percent_change * 100
+                            ).toFixed(2)}
+                            %)
                           </div>
                         ) : (
                           <div className="text-sm text-gray-500">N/A</div>
@@ -647,8 +715,18 @@ function Portfolio() {
                           className="p-1 text-gray-400 hover:text-blue-600 disabled:opacity-50"
                           title="Refresh price"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -667,7 +745,8 @@ function Portfolio() {
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete the position for {deleteConfirm}? This action cannot be undone.
+              Are you sure you want to delete the position for {deleteConfirm}?
+              This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-4">
               <button
@@ -687,7 +766,7 @@ function Portfolio() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default Portfolio
+export default Portfolio;
