@@ -12,6 +12,7 @@ function Portfolio() {
   // Form state for adding new position
   const [newTicker, setNewTicker] = useState('')
   const [newQuantity, setNewQuantity] = useState('')
+  const [quantityError, setQuantityError] = useState(null)
   const [addingPosition, setAddingPosition] = useState(false)
 
   // Search state
@@ -209,7 +210,10 @@ function Portfolio() {
         throw new Error(errorData.detail || 'Failed to add position')
       }
 
-      await fetchPositions()
+      const data = await response.json()
+
+      setPositions(prev => [...prev, data])
+
       setNewTicker('')
       setNewQuantity('')
       setSearchQuery('')
@@ -221,6 +225,24 @@ function Portfolio() {
       setError(err.message)
     } finally {
       setAddingPosition(false)
+    }
+  }
+
+  const handleQuantityChange = (e) => {
+    const value = e.target.value
+
+    if (value === '') {
+      setNewQuantity('')
+      setQuantityError(null)
+      return
+    }
+
+    setNewQuantity(value)
+
+    if (isNaN(value) || value <= 0 || value > 1000000) {
+      setQuantityError('Quantity must be a positive number between 1 and 1,000,000.')
+    } else {
+      setQuantityError(null)
     }
   }
 
@@ -460,19 +482,23 @@ function Portfolio() {
                 type="number"
                 id="quantity"
                 value={newQuantity}
-                onChange={(e) => setNewQuantity(e.target.value)}
+                onChange={handleQuantityChange}
                 placeholder="Enter quantity"
                 step="0.01"
                 min="0.01"
+                max="1000000"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
+            {quantityError && (
+              <div className="text-red-600 text-sm mt-1">{quantityError}</div>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={addingPosition}
+            disabled={addingPosition || !newTicker.trim() || !newQuantity || quantityError}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {addingPosition ? 'Adding...' : 'Add Position'}
