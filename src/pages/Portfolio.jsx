@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../hooks/useAuth";
+
+import TickerSearchDropdown from "../components/TickerSearchDropdown";
 
 function Portfolio() {
   const { token, handleTokenExpired } = useAuth();
-  const searchTimeoutRef = useRef(null);
+
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,15 +13,10 @@ function Portfolio() {
 
   // Form state for adding new position
   const [newTicker, setNewTicker] = useState("");
+  const [tickerError, setTickerError] = useState(null);
   const [newQuantity, setNewQuantity] = useState("");
   const [quantityError, setQuantityError] = useState(null);
   const [addingPosition, setAddingPosition] = useState(false);
-
-  // Search state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   // Edit state
   const [editingPosition, setEditingPosition] = useState(null);
@@ -173,44 +170,6 @@ function Portfolio() {
     }
   };
 
-  // Search tickers with debounce
-  const searchTickers = async (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setShowSearchDropdown(false);
-      return;
-    }
-
-    try {
-      setSearchLoading(true);
-      const response = await fetch(
-        `${API_URL}/search_ticker?q=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleTokenExpired(response);
-        }
-        throw new Error("Failed to search tickers");
-      }
-
-      const data = await response.json();
-      setSearchResults(data);
-      setShowSearchDropdown(data.length > 0);
-    } catch (err) {
-      console.error("Search error:", err);
-      setSearchResults([]);
-      setShowSearchDropdown(false);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
   // Add new position
   const addPosition = async (e) => {
     e.preventDefault();
@@ -246,9 +205,7 @@ function Portfolio() {
 
       setNewTicker("");
       setNewQuantity("");
-      setSearchQuery("");
-      setSearchResults([]);
-      setShowSearchDropdown(false);
+
       setSuccess("Position added successfully!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -337,43 +294,17 @@ function Portfolio() {
     }
   };
 
-  // This function is removed since we're using the working fetchLatestPrices instead
-
-  // Handle search input change with debounce
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    setNewTicker(query);
-
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // If query is empty, immediately hide dropdown
-    if (!query.trim()) {
-      setSearchResults([]);
-      setShowSearchDropdown(false);
+  // Handle search result selection
+  const selectTicker = (ticker) => {
+    if (positions.some((p) => p.ticker === ticker.symbol)) {
+      setTickerError(
+        `Ticker ${ticker.symbol} is already in your portfolio. Use the edit option to change the quantity.`
+      );
       return;
     }
 
-    // Set new timeout for debounced search
-    searchTimeoutRef.current = setTimeout(() => {
-      searchTickers(query);
-    }, 300); // 300ms debounce delay
-  };
-
-  // Handle search result selection
-  const handleSearchSelect = (ticker) => {
-    // Clear any pending search timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
     setNewTicker(ticker.symbol);
-    setSearchQuery(ticker.symbol);
-    setShowSearchDropdown(false);
-    setSearchResults([]);
+    setTickerError(null);
   };
 
   // Handle edit start
@@ -389,13 +320,6 @@ function Portfolio() {
     }
   };
 
-  // Handle keyboard navigation in search
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
-      setShowSearchDropdown(false);
-    }
-  };
-
   // Handle edit cancel
   const cancelEdit = () => {
     setEditingPosition(null);
@@ -405,29 +329,6 @@ function Portfolio() {
   useEffect(() => {
     fetchPositions();
   }, [fetchPositions]);
-
-  // Cleanup function to clear search timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest(".ticker-search-container")) {
-        setShowSearchDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   // Clear messages after 3 seconds
   useEffect(() => {
@@ -469,51 +370,12 @@ function Portfolio() {
         <form onSubmit={addPosition} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Ticker Search Input */}
-            <div className="relative ticker-search-container">
-              <label
-                htmlFor="ticker"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Ticker Symbol
-              </label>
-              <input
-                type="text"
-                id="ticker"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Search for a ticker (e.g., AAPL, Apple)"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-
-              {/* Search Dropdown */}
-              {showSearchDropdown && searchResults.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {searchResults.map((ticker) => (
-                    <button
-                      key={ticker.symbol}
-                      type="button"
-                      onClick={() => handleSearchSelect(ticker)}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                    >
-                      <div className="font-medium">{ticker.symbol}</div>
-                      <div className="text-sm text-gray-600">
-                        {ticker.shortname ||
-                          ticker.longname ||
-                          "No name available"}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {searchLoading && (
-                <div className="absolute right-3 top-9 text-gray-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                </div>
-              )}
-            </div>
+            <TickerSearchDropdown
+              onSelect={selectTicker}
+              ticker={newTicker}
+              queryBecomesTicker={true}
+              label="Ticker"
+            />
 
             {/* Quantity Input */}
             <div>
@@ -536,10 +398,15 @@ function Portfolio() {
                 required
               />
             </div>
-            {quantityError && (
-              <div className="text-red-600 text-sm mt-1">{quantityError}</div>
-            )}
           </div>
+
+          {tickerError && (
+            <div className="text-red-600 text-sm mt-1">{tickerError}</div>
+          )}
+
+          {quantityError && (
+            <div className="text-red-600 text-sm mt-1">{quantityError}</div>
+          )}
 
           <button
             type="submit"
@@ -547,6 +414,7 @@ function Portfolio() {
               addingPosition ||
               !newTicker.trim() ||
               !newQuantity ||
+              tickerError ||
               quantityError
             }
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"

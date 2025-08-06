@@ -17,7 +17,12 @@ import { useRef, useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
-function TickerSearchDropdown({ onSelect, ticker }) {
+function TickerSearchDropdown({
+  onSelect,
+  ticker,
+  queryBecomesTicker = false,
+  label = "Search Ticker",
+}) {
   // Search dropdown states
   const [searchQuery, setSearchQuery] = useState("");
   /** @type {[TickerSearchReference[], React.Dispatch<React.SetStateAction<TickerSearchReference[]>>]} */
@@ -27,6 +32,13 @@ function TickerSearchDropdown({ onSelect, ticker }) {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const debounceRef = useRef(null);
   const dropdownRef = useRef(null);
+
+  // Sync searchQuery with ticker when changed by parent
+  useEffect(() => {
+    if (queryBecomesTicker) {
+      setSearchQuery(ticker);
+    }
+  }, [ticker, queryBecomesTicker]);
 
   // Search functionality
   const searchTickers = async (query) => {
@@ -72,6 +84,10 @@ function TickerSearchDropdown({ onSelect, ticker }) {
       e.preventDefault();
       setShowDropdown(!showDropdown);
       setSelectedIndex(showDropdown ? 0 : -1);
+    } else if (e.key === "Tab") {
+      if (showDropdown) {
+        setShowDropdown(false);
+      }
     } else if (
       e.key === "ArrowDown" &&
       selectedIndex < searchResults.length - 1
@@ -83,8 +99,12 @@ function TickerSearchDropdown({ onSelect, ticker }) {
       setSelectedIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
-      onSelect(searchResults[selectedIndex]);
+      const selection = searchResults[selectedIndex];
+      onSelect(selection);
       setShowDropdown(false);
+      if (queryBecomesTicker) {
+        setSearchQuery(selection.symbol);
+      }
     }
   };
 
@@ -136,6 +156,12 @@ function TickerSearchDropdown({ onSelect, ticker }) {
 
   return (
     <div className="relative" ref={dropdownRef}>
+      <label
+        htmlFor="ticker-search"
+        className="block text-sm font-medium text-gray-700 mb-1"
+      >
+        {label}
+      </label>
       <input
         id="ticker-search"
         type="text"
@@ -178,6 +204,9 @@ function TickerSearchDropdown({ onSelect, ticker }) {
               onClick={() => {
                 onSelect(searchItem);
                 setShowDropdown(false);
+                if (queryBecomesTicker) {
+                  setSearchQuery(searchItem.symbol);
+                }
               }}
             >
               <div className="font-medium">{searchItem.symbol}</div>
