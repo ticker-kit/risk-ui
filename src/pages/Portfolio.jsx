@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
+import { ToastContainer, toast } from "react-toastify";
+
 import { useAuth } from "../hooks/useAuth";
 import PortfolioTable from "../components/PortfolioTable";
-
 import TickerSearchDropdown from "../components/TickerSearchDropdown";
 
 /**
@@ -21,7 +22,7 @@ import TickerSearchDropdown from "../components/TickerSearchDropdown";
  * fullExchangeName: string;
  * legalType: string | null;
  * fundFamily: string | null;
- * }} PortfolioPosition
+ * }} AssetPositionWithInfo
  */
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -29,11 +30,15 @@ const API_URL = import.meta.env.VITE_API_URL;
 function Portfolio() {
   const { token, handleTokenExpired } = useAuth();
 
-  /** @type {[PortfolioPosition[] | null, React.Dispatch<React.SetStateAction<PortfolioPosition[] | null>>]} */
+  const notify = (text) => {
+    console.log("Toast called:", text); // Add this line for debugging
+    toast(text);
+  };
+
+  /** @type {[AssetPositionWithInfo[] | null, React.Dispatch<React.SetStateAction<AssetPositionWithInfo[] | null>>]} */
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
 
   // Form state for adding new position
   const [newTicker, setNewTicker] = useState("");
@@ -105,6 +110,7 @@ function Portfolio() {
         throw new Error(errorData.detail || "Failed to add position");
       }
 
+      /** @type {AssetPositionWithInfo} */
       const data = await response.json();
 
       setPositions((prev) => [...prev, data]);
@@ -112,8 +118,7 @@ function Portfolio() {
       setNewTicker("");
       setNewQuantity("");
 
-      setSuccess("Position added successfully!");
-      setTimeout(() => setSuccess(null), 3000);
+      notify("Position added successfully!");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -163,10 +168,13 @@ function Portfolio() {
         throw new Error(errorData.detail || "Failed to update position");
       }
 
-      await fetchPositions();
+      /** @type {AssetPositionWithInfo} */
+      const data = await response.json();
+
+      setPositions((prev) => prev.map((p) => (p.ticker === symbol ? data : p)));
+
       setEditingPosition(null);
-      setSuccess("Position updated successfully!");
-      setTimeout(() => setSuccess(null), 3000);
+      notify("Position updated successfully!");
     } catch (err) {
       setError(err.message);
     }
@@ -196,8 +204,7 @@ function Portfolio() {
       );
 
       setDeleteConfirm(null);
-      setSuccess("Position deleted successfully!");
-      setTimeout(() => setSuccess(null), 3000);
+      notify("Position deleted successfully!");
     } catch (err) {
       setError(err.message);
     }
@@ -258,13 +265,6 @@ function Portfolio() {
   return (
     <div className="max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
-
-      {/* Success Message */}
-      {success && (
-        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-          {success}
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (
@@ -385,6 +385,7 @@ function Portfolio() {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 }

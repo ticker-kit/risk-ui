@@ -35,15 +35,19 @@ function PortfolioTable({
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Ticker
           </th>
+
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Quantity
           </th>
+
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Price
           </th>
+
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Currency
+            Value
           </th>
+
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Actions
           </th>
@@ -91,8 +95,15 @@ function PortfolioTable({
               </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
-              <div className="flex items-center">
-                <div className="text-sm text-gray-900">{position.currency}</div>
+              <div className="text-sm text-gray-900">
+                {(
+                  position.regularMarketPrice * position.quantity
+                ).toLocaleString(undefined, {
+                  style: "currency",
+                  currency: position.currency,
+                  maximumFractionDigits: 0,
+                  currencyDisplay: "code",
+                })}
               </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
