@@ -31,7 +31,6 @@ function Portfolio() {
   const { token, handleTokenExpired } = useAuth();
 
   const notify = (text) => {
-    console.log("Toast called:", text); // Add this line for debugging
     toast(text);
   };
 

@@ -49,6 +49,10 @@ function PortfolioTable({
           </th>
 
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Currency
+          </th>
+
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Actions
           </th>
         </tr>
@@ -91,20 +95,21 @@ function PortfolioTable({
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
               <div className="text-sm text-gray-900">
-                {position.regularMarketPrice.toFixed(2)}
+                {position.regularMarketPrice.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
               <div className="text-sm text-gray-900">
                 {(
                   position.regularMarketPrice * position.quantity
-                ).toLocaleString(undefined, {
-                  style: "currency",
-                  currency: position.currency,
-                  maximumFractionDigits: 0,
-                  currencyDisplay: "code",
-                })}
+                ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="text-sm text-gray-900">{position.currency}</div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div className="flex items-center space-x-2">
