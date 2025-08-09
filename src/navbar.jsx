@@ -10,13 +10,15 @@ import {
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
+import HomeCurrencyPicker from "./components/HomeCurrencyPicker";
+import { validateCurrency } from "./api/currency";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function AppNavbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const navigation = [
     { name: "Home", href: "/", disabled: false },
@@ -129,17 +131,14 @@ export default function AppNavbar() {
                         href="#"
                         className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
                       >
-                        Your profile
+                        Hi {user.username}
                       </a>
                     </MenuItem>
-                    <MenuItem>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                      >
-                        Settings
-                      </a>
-                    </MenuItem>
+
+                    <div className="px-4 py-2">
+                      <HomeCurrencyPicker onValidate={validateCurrency} />
+                    </div>
+
                     <MenuItem>
                       <button
                         onClick={logout}
