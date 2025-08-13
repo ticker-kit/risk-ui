@@ -1,24 +1,14 @@
-import {
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-} from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import HomeCurrencyPicker from "./components/HomeCurrencyPicker";
 import { validateCurrency } from "./api/currency";
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
-
 export default function AppNavbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef(null);
 
   const navigation = [
     { name: "Home", href: "/", disabled: false },
@@ -27,177 +17,190 @@ export default function AppNavbar() {
     { name: "Portfolio", href: "/portfolio", disabled: !isAuthenticated },
   ];
 
+  // Local NavigationItem component
+  const NavigationItem = ({ item, isMobile = false, className = "" }) => {
+    if (item.disabled) {
+      return (
+        <span
+          key={item.name}
+          aria-disabled="true"
+          className={`${className} opacity-60`}
+        >
+          {item.name}
+        </span>
+      );
+    }
+
+    const handleClick = () => {
+      if (isMobile) {
+        setMobileOpen(false);
+      }
+    };
+
+    return (
+      <NavLink
+        key={item.name}
+        to={item.href}
+        end={item.href === "/"}
+        onClick={handleClick}
+        className={({ isActive }) =>
+          isActive
+            ? `${className} font-semibold underline`
+            : `${className} hover:underline`
+        }
+      >
+        {item.name}
+      </NavLink>
+    );
+  };
+
+  // Close account dropdown on outside click or Esc
+  useEffect(() => {
+    // if (!accountOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (accountRef.current && !accountRef.current.contains(event.target)) {
+        setAccountOpen(false);
+      }
+    };
+
+    const onKey = (e) => {
+      if (e.key === "Escape") setAccountOpen(false);
+    };
+
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <Disclosure as="nav" className="relative bg-gray-800">
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-        <div className="relative flex h-16 items-center justify-between">
-          <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-            {/* Mobile menu button*/}
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
-              <span className="absolute -inset-0.5" />
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon
-                aria-hidden="true"
-                className="block size-6 group-data-open:hidden"
-              />
-              <XMarkIcon
-                aria-hidden="true"
-                className="hidden size-6 group-data-open:block"
-              />
-            </DisclosureButton>
-          </div>
-          <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-            <div className="flex shrink-0 items-center">
-              <img
-                alt="Your Company"
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                className="h-8 w-auto"
-              />
-            </div>
-            <div className="hidden sm:ml-6 sm:block">
-              <div className="flex space-x-4">
-                {navigation.map((item) =>
-                  item.disabled ? (
-                    <span
-                      key={item.name}
-                      role="link"
-                      aria-disabled="true"
-                      tabIndex={-1}
-                      title="Log in to access"
-                      className={classNames(
-                        "group relative inline-block rounded-md px-3 py-2 text-sm font-medium text-gray-300 opacity-60 cursor-not-allowed"
-                      )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
-                      {item.name}
-                      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                        Log in to access
-                      </span>
-                    </span>
-                  ) : (
-                    <NavLink
-                      key={item.name}
-                      to={item.href}
-                      end={item.href === "/"}
-                      className={({ isActive }) =>
-                        classNames(
-                          isActive
-                            ? "bg-gray-900 text-white"
-                            : "text-gray-300 hover:bg-white/5 hover:text-white",
-                          "rounded-md px-3 py-2 text-sm font-medium"
-                        )
-                      }
-                    >
-                      {item.name}
-                    </NavLink>
-                  )
-                )}
-              </div>
+    <nav className="bg-blue-700 text-white">
+      <div className="px-4">
+        <div className="flex items-center h-16">
+          {/* Left: burger + desktop links */}
+          <div className="flex-1 flex items-center">
+            <button
+              type="button"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen((o) => !o)}
+              className="sm:hidden p-2"
+            >
+              {mobileOpen ? (
+                <svg
+                  className="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              ) : (
+                <svg
+                  className="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              )}
+            </button>
+            <div className="hidden sm:flex gap-2 ml-2">
+              {navigation.map((item) => (
+                <NavigationItem
+                  key={item.name}
+                  item={item}
+                  isMobile={false}
+                  className="px-2 py-1"
+                />
+              ))}
             </div>
           </div>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+
+          {/* Center: Logo */}
+          <div className="flex items-center">
+            <NavLink to="/">
+              <img alt="Logo" src="/logo.svg" className="h-8 w-auto" />
+            </NavLink>
+          </div>
+
+          {/* Right: Auth actions (always visible) */}
+          <div className="flex-1 flex items-center justify-end">
             {isAuthenticated ? (
-              <>
+              <div ref={accountRef} className="relative">
                 <button
                   type="button"
-                  className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  onClick={() => setAccountOpen((o) => !o)}
+                  className="flex items-center gap-2 px-2 py-1"
                 >
-                  <span className="absolute -inset-1.5" />
-                  <span className="sr-only">View notifications</span>
-                  <BellIcon aria-hidden="true" className="size-6" />
+                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-600">
+                    {user?.username?.[0]?.toUpperCase() || "U"}
+                  </span>
                 </button>
-
-                {/* Profile dropdown */}
-                <Menu as="div" className="relative ml-3">
-                  <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-                    <span className="absolute -inset-1.5" />
-                    <span className="sr-only">Open user menu</span>
-                    <img
-                      alt=""
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      className="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
-                    />
-                  </MenuButton>
-
-                  <MenuItems
-                    transition
-                    className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg outline outline-black/5 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+                {accountOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-56 rounded bg-white text-gray-900 shadow z-10"
                   >
-                    <MenuItem>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                      >
-                        Hi {user.username}
-                      </a>
-                    </MenuItem>
-
-                    <div className="px-4 py-2">
+                    <div className="px-4 py-2 text-sm">Hi {user?.username}</div>
+                    <div className="px-4 py-2 border-t">
                       <HomeCurrencyPicker onValidate={validateCurrency} />
                     </div>
-
-                    <MenuItem>
-                      <button
-                        onClick={logout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
-                      >
-                        Sign out
-                      </button>
-                    </MenuItem>
-                  </MenuItems>
-                </Menu>
-              </>
+                    <button
+                      onClick={() => {
+                        setAccountOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 border-t"
+                      role="menuitem"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <NavLink
-                to="/login"
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white"
-              >
+              <NavLink to="/login" className="px-3 py-2 hover:underline">
                 Login
               </NavLink>
             )}
           </div>
         </div>
-      </div>
 
-      <DisclosurePanel className="sm:hidden">
-        <div className="space-y-1 px-2 pt-2 pb-3">
-          {navigation.map((item) =>
-            item.disabled ? (
-              <span
-                key={item.name}
-                aria-disabled="true"
-                title="Log in to access"
-                className={classNames(
-                  "text-gray-300 opacity-50 cursor-not-allowed pointer-events-none",
-                  "block rounded-md px-3 py-2 text-base font-medium"
-                )}
-              >
-                {item.name}
-              </span>
-            ) : (
-              <DisclosureButton
-                key={item.name}
-                as={NavLink}
-                to={item.href}
-                end={item.href === "/"}
-                className={({ isActive }) =>
-                  classNames(
-                    isActive
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-300 hover:bg-white/5 hover:text-white",
-                    "block rounded-md px-3 py-2 text-base font-medium"
-                  )
-                }
-              >
-                {item.name}
-              </DisclosureButton>
-            )
-          )}
-        </div>
-      </DisclosurePanel>
-    </Disclosure>
+        {/* Mobile menu: nav links only */}
+        {mobileOpen && (
+          <div className="sm:hidden border-t border-blue-600">
+            <div className="px-2 py-2">
+              {navigation.map((item) => (
+                <NavigationItem
+                  key={item.name}
+                  item={item}
+                  isMobile={true}
+                  setMobileOpen={setMobileOpen}
+                  className="block px-2 py-2"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
   );
 }
