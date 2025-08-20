@@ -187,14 +187,14 @@ export default function AppNavbar() {
         {/* Mobile menu: nav links only */}
         {mobileOpen && (
           <div className="sm:hidden border-t border-blue-600">
-            <div className="px-2 py-2">
+            <div className="absolute bg-blue-700 -mx-4 z-10">
               {navigation.map((item) => (
                 <NavigationItem
                   key={item.name}
                   item={item}
                   isMobile={true}
                   setMobileOpen={setMobileOpen}
-                  className="block px-2 py-2"
+                  className="block px-4 py-2"
                 />
               ))}
             </div>
