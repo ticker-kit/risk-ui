@@ -1,6 +1,6 @@
 import { Routes, Route, Link } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
-import Dashboard from "./pages/Dashboard";
+
 import TickerMetrics from "./pages/TickerMetrics";
 import Portfolio from "./pages/Portfolio";
 import Home from "./pages/Home";
@@ -27,14 +27,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+
         <Route path="/ticker/:ticker?" element={<TickerMetrics />} />
 
         <Route

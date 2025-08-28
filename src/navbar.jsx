@@ -13,7 +13,6 @@ export default function AppNavbar() {
   const navigation = [
     { name: "Home", href: "/", disabled: false },
     { name: "Ticker Metrics", href: "/ticker", disabled: false },
-    { name: "Dashboard", href: "/dashboard", disabled: !isAuthenticated },
     { name: "Portfolio", href: "/portfolio", disabled: !isAuthenticated },
   ];
 
