@@ -5,17 +5,20 @@ A modern React frontend for managing investment portfolios with real-time price 
 ## 🚀 Features
 
 ### Portfolio Management
+
 - **Add/Edit/Delete Positions**: Full CRUD operations for portfolio positions
 - **Real-time Price Updates**: Trigger on-demand price refreshes through Redis Pub/Sub
-- **Portfolio Dashboard**: Overview of total value, daily changes, and performance
+
 - **Position Value Calculation**: Automatic calculation of position values based on latest prices
 
 ### Ticker Analysis
+
 - **Ticker Metrics**: Calculate and display mean return, volatility, Sharpe ratio, and max drawdown
 - **Live Price Data**: Integration with latest price data from the event-driven system
 - **Ticker Search**: Search and validate ticker symbols before adding to portfolio
 
 ### Event-Driven Architecture Integration
+
 - **Async Price Updates**: Triggers price updates via Redis Pub/Sub to the metrics-worker
 - **Real-time Data**: Fetches latest prices stored by the background worker
 - **Refresh Controls**: Manual refresh buttons for both individual positions and entire portfolio
@@ -28,7 +31,7 @@ This frontend integrates with the event-driven microservices:
 [ User Action ] → [ risk-ui ] → [ risk-api ] ⇨ (Publishes to Redis)
                                                     ↓
                                               [ metrics-worker ] ⇦ (Subscribes)
-                                                    ↓ 
+                                                    ↓
                                               [ Fetches via yFinance ]
                                                     ↓
                                               [ Stores in PostgreSQL ]
@@ -46,24 +49,21 @@ This frontend integrates with the event-driven microservices:
 
 ## 📱 Pages
 
-### 1. Dashboard (`/dashboard`)
-- Portfolio overview with key metrics
-- Total value, daily changes, top performers
-- Quick actions and recent activity
-- "Refresh All Data" button to trigger portfolio-wide price updates
-
 ### 2. Portfolio (`/portfolio`)
+
 - Manage individual positions
 - Real-time price display with individual refresh buttons
 - Position value calculations
 - Ticker search with autocomplete
 
 ### 3. Ticker Metrics (`/ticker`)
+
 - Ticker analysis for individual tickers
 - Latest price integration
 - Ticker metrics visualization (Mean Return, Volatility, Sharpe Ratio, Max Drawdown)
 
 ### 4. Authentication
+
 - Login/Register functionality
 - Protected routes for portfolio features
 - JWT token management
@@ -73,23 +73,27 @@ This frontend integrates with the event-driven microservices:
 The frontend communicates with the `risk-api` using these endpoints:
 
 ### Portfolio Management
+
 - `GET /portfolio` - Fetch user positions
 - `POST /portfolio` - Add new position
 - `PUT /portfolio/{ticker}` - Update position quantity
 - `DELETE /portfolio/{ticker}` - Remove position
 
 ### Price & Event System
+
 - `POST /trigger-price-update` - Trigger Redis Pub/Sub price update
 - `GET /latest-price/{ticker}` - Fetch stored price data
 - `POST /trigger-portfolio-refresh` - Refresh all portfolio prices
 
 ### Ticker Analysis
+
 - `POST /risk_metrics_from_ticker` - Calculate Ticker metrics
 - `GET /search_ticker` - Search for ticker symbols
 
 ## 🚀 Development
 
 ### Prerequisites
+
 - Node.js 16+
 - npm or yarn
 - Docker (optional, for full stack)
@@ -97,6 +101,7 @@ The frontend communicates with the `risk-api` using these endpoints:
 ### Quick Start
 
 #### Option 1: Using Startup Scripts (Recommended)
+
 ```bash
 # Windows
 powershell -ExecutionPolicy Bypass -File start.ps1
@@ -106,6 +111,7 @@ powershell -ExecutionPolicy Bypass -File start.ps1
 ```
 
 #### Option 2: Manual Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -126,6 +132,7 @@ The project supports multiple environment configurations:
 - **`.env.production`** - Production deployment
 
 #### Environment Variables
+
 ```env
 VITE_API_URL=http://localhost:8000  # Your risk-api URL
 VITE_DEV_HOST=localhost             # Dev server host (optional)
@@ -135,6 +142,7 @@ VITE_DEV_PORT=3000                  # Dev server port (optional)
 ### Development Modes
 
 #### Local Development
+
 ```bash
 # Start UI only (API must be running separately)
 npm run dev
@@ -144,6 +152,7 @@ npm run dev
 ```
 
 #### Docker Development
+
 ```bash
 # Start full stack (UI + API + Database + Redis)
 docker-compose up --build
@@ -153,6 +162,7 @@ docker-compose up --build
 ```
 
 #### Production Build
+
 ```bash
 # Build for production
 npm run build
@@ -181,12 +191,14 @@ npm run preview
 - **Event-Driven**: Leverages Redis Pub/Sub for async communication
 
 ## 📊 Live Demo
+
 https://risk-ui-nine.vercel.app
-*Powered by FastAPI backend hosted on Render*
+_Powered by FastAPI backend hosted on Render_
 
 ## 🔧 Docker Commands
 
 ### Essential Commands
+
 ```bash
 # Start all services
 docker-compose up --build
@@ -203,6 +215,7 @@ docker-compose down
 ```
 
 ### Integration Testing
+
 ```bash
 # Test UI
 curl http://localhost:3000
@@ -216,6 +229,7 @@ curl http://localhost:10000/healthz
 ### Common Issues
 
 **UI won't start**:
+
 ```bash
 # Check if port 3000 is available
 netstat -an | grep :3000
@@ -226,6 +240,7 @@ npm install
 ```
 
 **API connection issues**:
+
 ```bash
 # Verify API is running
 curl http://localhost:8000/healthz  # Local
@@ -236,6 +251,7 @@ cat .env.local  # or .env.docker
 ```
 
 **Docker issues**:
+
 ```bash
 # Reset Docker environment
 docker-compose down -v
@@ -246,6 +262,7 @@ docker-compose logs -f
 ```
 
 **Build failures**:
+
 ```bash
 # Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
@@ -266,4 +283,4 @@ rm -rf node_modules/.vite
 
 ---
 
-*Part of the Event-Driven Ticker Metrics Microservices Project* 
+_Part of the Event-Driven Ticker Metrics Microservices Project_
