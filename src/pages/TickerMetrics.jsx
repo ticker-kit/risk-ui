@@ -73,14 +73,16 @@ function TickerMetrics() {
     try {
       const res = await fetch(`${API_BASE}/ticker/${tickerSymbol}`);
 
-      if (!res.ok) {
-        throw new Error(
-          `Request failed with '${res.status}' '${res.statusText}' at '${res.url}'`
-        );
-      }
-
       /** @type {TickerMetricsResponse} */
       const result = await res.json();
+
+      if (!res.ok) {
+        // console.log(await res.json());
+        throw new Error(
+          result.detail ||
+            `Request failed with '${res.status}' '${res.statusText}' at '${res.url}'`
+        );
+      }
 
       if (result.error_msg) {
         setError(result.error_msg);
@@ -150,7 +152,26 @@ function TickerMetrics() {
     <div className="max-w-4xl mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">Ticker Metrics</h2>
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3"
+        >
+          <div className="flex-1">
+            <p className="font-semibold text-red-800">Error</p>
+            <p className="text-sm text-red-700 mt-1">{String(error)}</p>
+          </div>
+
+          <button
+            onClick={() => setError(null)}
+            className="ml-4 text-sm text-red-600 hover:underline"
+            aria-label="Dismiss error"
+            title="Dismiss"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Search Input with Dropdown */}
       <div className="mb-4">
