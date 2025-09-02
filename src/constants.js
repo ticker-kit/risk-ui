@@ -1,0 +1,1 @@
+export const POPULAR_CURRENCIES = ["USD","EUR","GBP","JPY","CNY","AUD","CAD","CHF","NZD"];

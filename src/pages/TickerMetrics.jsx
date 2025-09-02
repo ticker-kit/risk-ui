@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import PriceChart from "../components/PriceChart";
 import TickerSearchDropdown from "../components/TickerSearchDropdown";
+import CurrencySelect from "../components/CurrencySelect";
+
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * @typedef {{
@@ -10,7 +13,7 @@ import TickerSearchDropdown from "../components/TickerSearchDropdown";
  *    industryDisp?: string,
  *    sectorDisp?: string,
  *    longBusinessSummary?: string,
- *    currency?: string,
+ *    currency: string,
  *    enterpriseValue?: number,
  *    bookValue?: number,
  *    marketCap?: number,
@@ -56,6 +59,8 @@ import TickerSearchDropdown from "../components/TickerSearchDropdown";
 const API_BASE = import.meta.env.VITE_API_URL;
 
 function TickerMetrics() {
+  const { user } = useAuth();
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   // State to hold ticker and metrics data
@@ -65,13 +70,20 @@ function TickerMetrics() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchTickerMetrics = async (tickerSymbol) => {
+  // State for currency dropdown of the asset analyzed
+  const [currency, setCurrency] = useState("");
+
+  const fetchTickerMetrics = async (tickerSymbol, currencyParam) => {
     setLoading(true);
     setData(null);
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/ticker/${tickerSymbol}`);
+      const url =
+        `${API_BASE}/ticker/${tickerSymbol}` +
+        (currencyParam ? `/?currency=${currencyParam}` : "");
+
+      const res = await fetch(url);
 
       /** @type {TickerMetricsResponse} */
       const result = await res.json();
@@ -94,6 +106,7 @@ function TickerMetrics() {
         );
         setData(result);
         setTicker(tickerSymbol);
+        setCurrency(currencyParam || result.info.currency);
       }
     } catch (err) {
       setError(err.message);
@@ -104,9 +117,10 @@ function TickerMetrics() {
 
   useEffect(() => {
     const tickerUrl = searchParams.get("ticker");
+    const currencyParam = searchParams.get("currency");
 
     if (tickerUrl) {
-      fetchTickerMetrics(tickerUrl);
+      fetchTickerMetrics(tickerUrl, currencyParam);
     }
   }, [searchParams]);
 
@@ -121,6 +135,16 @@ function TickerMetrics() {
     },
     [setSearchParams]
   );
+
+  const onCurrencySelect = (newCurrency) => {
+    setCurrency(newCurrency);
+
+    if (data?.info?.currency && newCurrency !== data?.info?.currency) {
+      setSearchParams({ ticker, currency: newCurrency });
+    } else {
+      setSearchParams({ ticker });
+    }
+  };
 
   // Memoize the chart data transformation to avoid recalculating on every render
   const chartData = useMemo(() => {
@@ -193,7 +217,8 @@ function TickerMetrics() {
                 setTicker("");
                 setData(null);
                 setError(null);
-                setSearchParams({ ticker: "" });
+                setCurrency("");
+                setSearchParams({});
               }}
               className="text-blue-600 hover:text-blue-800 text-sm underline"
             >
@@ -235,9 +260,15 @@ function TickerMetrics() {
                 </div>
               </div>
               <div className="mt-4 md:mt-0 text-right">
-                <div className="text-3xl font-bold text-gray-900">
+                <CurrencySelect
+                  assetCurrency={data.info?.currency}
+                  userCurrency={user?.currency}
+                  value={currency}
+                  onChangeValue={onCurrencySelect}
+                />
+                {/* <div className="text-3xl font-bold text-gray-900">
                   {data.info?.currentPrice?.toFixed(2)} {data.info?.currency}
-                </div>
+                </div> */}
                 <div
                   className={`text-sm ${
                     data.info?.regularMarketChangePercent >= 0

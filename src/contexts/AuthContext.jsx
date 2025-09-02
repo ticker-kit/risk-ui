@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const userData = await response.json();
-      setUser({ username: userData.username });
+      setUser({ username: userData.username, currency: userData.currency });
       return true;
     } catch (error) {
       console.error("Token validation failed:", error);
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        setAuth(data.access_token, { username });
+        setAuth(data.access_token, { username, currency: data.currency });
       }
 
       return data;
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        setAuth(data.access_token, { username });
+        setAuth(data.access_token, { username, currency: data.currency });
       }
 
       return data;
