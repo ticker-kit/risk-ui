@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
+/**
+ * Currency picker component that allows users to change their home currency
+ * @param {Object} props - Component props
+ * @param {string} [props.initial="USD"] - Initial currency code if user has no currency set
+ */
 export default function HomeCurrencyPicker({ initial = "USD" }) {
-  const { token } = useAuth();
+  const { token, user, updateUserCurrency } = useAuth();
 
-  const [value, setValue] = useState((initial || "USD").toUpperCase());
+  const [value, setValue] = useState((user?.currency || initial || "USD").toUpperCase());
   const [status, setStatus] = useState("idle"); // idle | saving | success | error
   const [suggestions, setSuggestions] = useState([]);
   const [serverMessage, setServerMessage] = useState("");
+
+  // Update value when user currency changes
+  useEffect(() => {
+    setValue((user?.currency || initial || "USD").toUpperCase());
+  }, [user?.currency, initial]);
 
   const submit = async () => {
     const code = value.trim().toUpperCase();
@@ -37,6 +47,8 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
       setServerMessage(res?.message || "");
       if (res?.ok) {
         setStatus("success");
+        // Update user context with new currency
+        updateUserCurrency(code);
         setTimeout(() => setStatus("idle"), 1200);
       } else {
         setStatus("error");
