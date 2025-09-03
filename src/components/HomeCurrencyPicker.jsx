@@ -3,19 +3,13 @@ import { useAuth } from "../hooks/useAuth";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
-export default function HomeCurrencyPicker({ initial = "USD", onValidate }) {
+export default function HomeCurrencyPicker({ initial = "USD" }) {
   const { token } = useAuth();
 
   const [value, setValue] = useState((initial || "USD").toUpperCase());
   const [status, setStatus] = useState("idle"); // idle | saving | success | error
   const [suggestions, setSuggestions] = useState([]);
   const [serverMessage, setServerMessage] = useState("");
-
-  const fallbackValidate = async (code) => {
-    // Minimal client-side check until API is wired
-    const ok = /^[A-Z]{3}$/.test(code);
-    return { ok, message: ok ? "Saved" : "Invalid currency code" };
-  };
 
   const submit = async () => {
     const code = value.trim().toUpperCase();
@@ -26,10 +20,6 @@ export default function HomeCurrencyPicker({ initial = "USD", onValidate }) {
     setSuggestions([]);
     setServerMessage("");
     try {
-      //   const res = await (onValidate
-      //     ? onValidate(code)
-      //     : fallbackValidate(code));
-
       const response = await fetch(
         `${API_BASE}/home_currency?code=${encodeURIComponent(code)}`,
         {
