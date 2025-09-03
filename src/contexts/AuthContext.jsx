@@ -145,6 +145,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to update user currency
+  /**
+   * Updates the user's currency in both the context state and localStorage
+   * @param {string} newCurrency - The new currency code (e.g., "USD", "EUR")
+   */
+  const updateUserCurrency = (newCurrency) => {
+    if (user) {
+      const updatedUser = { ...user, currency: newCurrency };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+  };
+
   const value = {
     user,
     token,
@@ -155,6 +168,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!token && !!user,
     validateToken,
     handleTokenExpired,
+    updateUserCurrency,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

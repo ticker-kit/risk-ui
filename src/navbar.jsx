@@ -159,7 +159,7 @@ export default function AppNavbar() {
                   >
                     <div className="px-4 py-2 text-sm">Hi {user?.username}</div>
                     <div className="px-4 py-2 border-t">
-                      <HomeCurrencyPicker />
+                      <HomeCurrencyPicker initial={user?.currency} />
                     </div>
                     <button
                       onClick={() => {
