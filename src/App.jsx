@@ -7,7 +7,6 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Users from "./pages/Users";
-import CurrencyPickerDemo from "./pages/CurrencyPickerDemo";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppNavbar from "./navbar";
 
@@ -49,7 +48,6 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/demo" element={<CurrencyPickerDemo />} />
       </Routes>
     </div>
   );
