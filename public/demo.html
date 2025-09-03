@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Picker Demo</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root" class="p-8 bg-gray-50 min-h-screen">
+        <h1 class="text-2xl font-bold mb-6">HomeCurrencyPicker Current Design</h1>
+        <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+            <div id="demo"></div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Mock HomeCurrencyPicker based on the actual code
+        function MockHomeCurrencyPicker({ initial = "USD" }) {
+            const [value, setValue] = useState(initial.toUpperCase());
+            const [status, setStatus] = useState("idle");
+            const [suggestions, setSuggestions] = useState([]);
+            const [serverMessage, setServerMessage] = useState("");
+
+            const submit = async () => {
+                const code = value.trim().toUpperCase();
+                setValue(code);
+                if (!code) return;
+
+                setStatus("saving");
+                setSuggestions([]);
+                setServerMessage("");
+                
+                // Mock API call
+                setTimeout(() => {
+                    if (code === "XXX") {
+                        setStatus("error");
+                        setSuggestions(["USD", "EUR", "GBP"]);
+                        setServerMessage("Invalid currency code");
+                    } else {
+                        setStatus("success");
+                        setServerMessage(`Currency set to ${code}`);
+                        setTimeout(() => setStatus("idle"), 1200);
+                    }
+                }, 500);
+            };
+
+            const onSubmit = (e) => {
+                e?.preventDefault?.();
+                submit();
+            };
+
+            const onKeyDown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    submit();
+                }
+            };
+
+            const borderColor =
+                status === "error"
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : status === "success"
+                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    : "border-gray-300 focus:border-indigo-500 focus:ring-indigo-500";
+
+            return (
+                <form onSubmit={onSubmit}>
+                    <div className="flex items-center gap-2">
+                        <input
+                            aria-label="Currency"
+                            id="homeCurrency"
+                            type="text"
+                            inputMode="text"
+                            maxLength={3}
+                            value={value}
+                            onChange={(e) => setValue(e.target.value.toUpperCase())}
+                            onKeyDown={onKeyDown}
+                            placeholder="USD"
+                            className={`w-20 rounded-md border bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 ${borderColor}`}
+                        />
+                        <button
+                            type="submit"
+                            disabled={status === "saving"}
+                            className="inline-flex items-center rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            title="Set currency"
+                        >
+                            {status === "saving" ? "…" : "Set"}
+                        </button>
+                    </div>
+                    {status === "success" && (
+                        <span className="text-green-600 text-[11px]" aria-live="polite">
+                            ✓
+                        </span>
+                    )}
+                    {status !== "idle" && serverMessage && (
+                        <div
+                            className={`text-[11px] mt-1 ${
+                                status === "success" ? "text-green-600" : "text-red-600"
+                            }`}
+                        >
+                            {serverMessage}
+                        </div>
+                    )}
+                    {status === "error" && suggestions?.length > 0 && (
+                        <div className="ml-1 flex flex-wrap gap-1">
+                            {suggestions.map((s) => (
+                                <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => setValue(s.toUpperCase())}
+                                    className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-200"
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </form>
+            );
+        }
+
+        function Demo() {
+            return (
+                <div>
+                    <h3 className="text-lg font-semibold mb-4">Current Design:</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                        Issue: Always shows input field and button, taking up space even when not being used.
+                    </p>
+                    <MockHomeCurrencyPicker initial="USD" />
+                    <p className="text-xs text-gray-500 mt-4">
+                        Try typing "XXX" to see error state with suggestions.
+                    </p>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Demo />, document.getElementById('demo'));
+    </script>
+</body>
+</html>
