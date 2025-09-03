@@ -137,10 +137,11 @@ function TickerMetrics() {
   );
 
   const onCurrencySelect = (newCurrency) => {
-    setCurrency(newCurrency);
+    const code = newCurrency.substring(0, 3);
+    setCurrency(code);
 
-    if (data?.info?.currency && newCurrency !== data?.info?.currency) {
-      setSearchParams({ ticker, currency: newCurrency });
+    if (data?.info?.currency && code !== data?.info?.currency) {
+      setSearchParams({ ticker, currency: code });
     } else {
       setSearchParams({ ticker });
     }
