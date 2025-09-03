@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import HomeCurrencyPicker from "./components/HomeCurrencyPicker";
-import { validateCurrency } from "./api/currency";
 
 export default function AppNavbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -160,7 +159,7 @@ export default function AppNavbar() {
                   >
                     <div className="px-4 py-2 text-sm">Hi {user?.username}</div>
                     <div className="px-4 py-2 border-t">
-                      <HomeCurrencyPicker onValidate={validateCurrency} />
+                      <HomeCurrencyPicker />
                     </div>
                     <button
                       onClick={() => {
