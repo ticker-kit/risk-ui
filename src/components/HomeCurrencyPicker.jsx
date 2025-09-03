@@ -33,30 +33,28 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
       const response = await fetch(
         `${API_BASE}/home_currency?code=${encodeURIComponent(code)}`,
         {
+          method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
       const res = await response.json();
-
       setServerMessage(res?.message || "");
-      if (res?.ok) {
+
+      if (response.ok && res?.success) {
         setStatus("success");
         // Update user context with new currency
         updateUserCurrency(code);
         setTimeout(() => setStatus("idle"), 1200);
       } else {
         setStatus("error");
-        setSuggestions(Array.isArray(res?.suggestions) ? res.suggestions : []);
+        setSuggestions(Array.isArray(res?.recommendations) ? res.recommendations : []);
       }
     } catch {
       setStatus("error");
-      setServerMessage("Something went wrong");
+      setServerMessage("Network error - please try again");
     }
   };
 
@@ -114,13 +112,13 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
         </span>
       )} */}
       {status !== "idle" && serverMessage && (
-        <span
-          className={`text-[11px] ${
+        <div
+          className={`text-[11px] mt-1 ${
             status === "success" ? "text-green-600" : "text-red-600"
           }`}
         >
           {serverMessage}
-        </span>
+        </div>
       )}
       {status === "error" && suggestions?.length > 0 && (
         <div className="ml-1 flex flex-wrap gap-1">
