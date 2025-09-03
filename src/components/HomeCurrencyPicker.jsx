@@ -39,8 +39,8 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
     setServerMessage("");
   };
 
-  const submit = async () => {
-    const code = editValue.trim().toUpperCase();
+  const submit = async (customCode = null) => {
+    const code = (customCode || editValue).trim().toUpperCase();
     setEditValue(code);
     if (!code) return;
 
@@ -179,7 +179,7 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
             <button
               key={s}
               type="button"
-              onClick={() => setEditValue(s.toUpperCase())}
+              onClick={() => submit(s)}
               className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-200"
             >
               {s}
