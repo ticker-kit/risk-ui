@@ -22,7 +22,7 @@ function App() {
   }
 
   return (
-    <div className="p-6 font-sans">
+    <div className="font-sans">
       <AppNavbar />
 
       <Routes>

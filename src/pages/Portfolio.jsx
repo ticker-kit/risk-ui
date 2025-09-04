@@ -262,8 +262,9 @@ function Portfolio() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
+    <div className="p-4 md:p-6">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
 
       {/* Error Message */}
       {error && (
@@ -385,6 +386,7 @@ function Portfolio() {
         </div>
       )}
       <ToastContainer />
+      </div>
     </div>
   );
 }
