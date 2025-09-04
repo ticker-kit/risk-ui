@@ -110,17 +110,17 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
         <button
           type="button"
           onClick={startEditing}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-theme-primary transition-colors duration-150"
           title="Click to change currency"
         >
           <span className="font-semibold">{value}</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
         </button>
         {status === "success" && (
-          <span className="text-green-600 text-xs" aria-live="polite">
-            ✓
+          <span className="text-green-600 text-xs font-medium" aria-live="polite">
+            ✓ Saved
           </span>
         )}
       </div>
@@ -141,12 +141,12 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
           onKeyDown={onKeyDown}
           placeholder="USD"
           autoFocus
-          className={`w-20 rounded-md border bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 ${borderColor}`}
+          className={`w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-theme-primary ${borderColor}`}
         />
         <button
           type="submit"
           disabled={status === "saving"}
-          className="inline-flex items-center rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="inline-flex items-center rounded-md bg-theme-primary px-3 py-2 text-xs font-medium text-white hover:bg-theme-primary-dark disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-theme-primary transition-colors duration-150"
           title="Save currency"
         >
           {status === "saving" ? "…" : "Save"}
@@ -154,7 +154,7 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
         <button
           type="button"
           onClick={cancelEditing}
-          className="inline-flex items-center rounded-md bg-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          className="inline-flex items-center rounded-md bg-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors duration-150"
           title="Cancel editing"
         >
           Cancel
@@ -164,7 +164,7 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
       {/* Status messages */}
       {status !== "idle" && serverMessage && (
         <div
-          className={`text-[11px] mt-1 ${
+          className={`text-xs mt-2 ${
             status === "success" ? "text-green-600" : "text-red-600"
           }`}
         >
@@ -174,13 +174,13 @@ export default function HomeCurrencyPicker({ initial = "USD" }) {
       
       {/* Suggestions */}
       {status === "error" && suggestions?.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-1">
+        <div className="mt-2 flex flex-wrap gap-1">
           {suggestions.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => submit(s)}
-              className="rounded bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-200"
+              className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 hover:bg-gray-200 border border-gray-200 transition-colors duration-150"
             >
               {s}
             </button>
