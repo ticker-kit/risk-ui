@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import PriceChart from "../components/PriceChart";
 import TickerSearchDropdown from "../components/TickerSearchDropdown";
 import CurrencySelect from "../components/CurrencySelect";
+import MainContentWrapper from "../components/MainContentWrapper";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -174,9 +175,8 @@ function TickerMetrics() {
     []
   );
   return (
-    <div className="p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Ticker Metrics</h2>
+    <MainContentWrapper>
+      <h2 className="text-2xl font-bold mb-4">Ticker Metrics</h2>
 
       {error && (
         <div
@@ -716,8 +716,7 @@ function TickerMetrics() {
           </div>
         </div>
       )}
-      </div>
-    </div>
+    </MainContentWrapper>
   );
 }
 
