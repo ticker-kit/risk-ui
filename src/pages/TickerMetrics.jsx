@@ -205,11 +205,11 @@ function TickerMetrics() {
 
       {/* Current Ticker Display */}
       {ticker && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+        <div className="mb-4 p-3 bg-theme-accent-light border border-theme-accent rounded">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm text-blue-600">Selected Ticker:</span>
-              <span className="ml-2 text-lg font-semibold text-blue-800">
+              <span className="text-sm text-theme-secondary">Selected Ticker:</span>
+              <span className="ml-2 text-lg font-semibold text-theme-primary">
                 {ticker}
               </span>
             </div>
@@ -221,7 +221,7 @@ function TickerMetrics() {
                 setCurrency("");
                 setSearchParams({});
               }}
-              className="text-blue-600 hover:text-blue-800 text-sm underline"
+              className="text-theme-secondary hover:text-theme-primary text-sm underline"
             >
               Clear
             </button>
@@ -231,14 +231,14 @@ function TickerMetrics() {
 
       {loading && (
         <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-primary"></div>
         </div>
       )}
 
       {data && !loading && (
         <div className="space-y-6">
           {/* Company Header */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg shadow-sm border border-blue-200">
+          <div className="bg-gradient-to-r from-theme-accent-light to-theme-accent-border p-6 rounded-lg shadow-sm border border-theme-accent">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">
@@ -246,7 +246,7 @@ function TickerMetrics() {
                 </h3>
                 <p className="text-lg text-gray-600">{data.info?.shortName}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                  <span className="px-2 py-1 bg-theme-accent-border text-theme-primary text-sm rounded-full">
                     {data.info?.typeDisp}
                   </span>
                   <span className="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">
@@ -333,15 +333,15 @@ function TickerMetrics() {
               Historical Risk & Return Analysis
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-sm text-blue-600">CAGR (Actual)</div>
-                <div className="text-xl font-semibold text-blue-900">
+              <div className="bg-theme-accent-light p-4 rounded-lg">
+                <div className="text-sm text-theme-secondary">CAGR (Actual)</div>
+                <div className="text-xl font-semibold text-theme-primary">
                   {data.cagr ? `${(data.cagr * 100).toFixed(2)}%` : "N/A"}
                 </div>
               </div>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-sm text-blue-600">CAGR (Model Fitted)</div>
-                <div className="text-xl font-semibold text-blue-900">
+              <div className="bg-theme-accent-light p-4 rounded-lg">
+                <div className="text-sm text-theme-secondary">CAGR (Model Fitted)</div>
+                <div className="text-xl font-semibold text-theme-primary">
                   {data.cagr_fitted
                     ? `${(data.cagr_fitted * 100).toFixed(2)}%`
                     : "N/A"}
@@ -401,8 +401,8 @@ function TickerMetrics() {
                 </div>
               </div>
 
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="mb-4 p-3 bg-theme-accent-light rounded-lg">
+                <p className="text-sm text-theme-primary">
                   <strong>Z-Score Info:</strong> Z-scores show how many standard
                   deviations away the current value is from the historical
                   average. Values between -2 and +2 are considered normal,

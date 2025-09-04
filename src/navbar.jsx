@@ -75,7 +75,7 @@ export default function AppNavbar() {
   }, []);
 
   return (
-    <nav className="bg-blue-700 text-white">
+    <nav className="bg-theme-primary text-white">
       <div className="px-4">
         <div className="flex items-center h-16">
           {/* Left: burger + desktop links */}
@@ -148,7 +148,7 @@ export default function AppNavbar() {
                   onClick={() => setAccountOpen((o) => !o)}
                   className="flex items-center gap-2 px-2 py-1"
                 >
-                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-600">
+                  <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-theme-primary-light">
                     {user?.username?.[0]?.toUpperCase() || "U"}
                   </span>
                 </button>
@@ -184,8 +184,8 @@ export default function AppNavbar() {
 
         {/* Mobile menu: nav links only */}
         {mobileOpen && (
-          <div className="sm:hidden border-t border-blue-600">
-            <div className="absolute bg-blue-700 -mx-4 z-10">
+          <div className="sm:hidden border-t border-theme-primary">
+            <div className="absolute bg-theme-primary -mx-4 z-10">
               {navigation.map((item) => (
                 <NavigationItem
                   key={item.name}
