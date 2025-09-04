@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+/* Dynamic Theme System - Easily customizable color variables */
+:root {
+  /* Primary theme colors - Change these to customize the theme */
+  --theme-primary-900: 109 40 217;     /* Deep purple */
+  --theme-primary-800: 124 58 237;     /* Dark purple */  
+  --theme-primary-700: 139 92 246;     /* Medium purple */
+  --theme-primary-600: 147 111 255;    /* Light purple */
+  --theme-primary-500: 156 163 255;    /* Lighter purple */
+  
+  /* Theme accent colors */
+  --theme-accent-50: 245 243 255;      /* Very light purple */
+  --theme-accent-100: 237 233 254;     /* Light purple background */
+  --theme-accent-200: 221 214 254;     /* Purple border */
+  
+  /* Text colors */
+  --theme-text-primary: 88 28 135;     /* Dark purple text */
+  --theme-text-secondary: 107 33 168;  /* Medium purple text */
+}
+
+/* Custom theme utility classes */
+.bg-theme-primary { background-color: rgb(var(--theme-primary-700)); }
+.bg-theme-primary-dark { background-color: rgb(var(--theme-primary-800)); }
+.bg-theme-primary-light { background-color: rgb(var(--theme-primary-600)); }
+.bg-theme-accent-light { background-color: rgb(var(--theme-accent-50)); }
+.bg-theme-accent-border { background-color: rgb(var(--theme-accent-100)); }
+
+.text-theme-primary { color: rgb(var(--theme-text-primary)); }
+.text-theme-secondary { color: rgb(var(--theme-text-secondary)); }
+.text-theme-light { color: rgb(var(--theme-primary-600)); }
+
+.border-theme-primary { border-color: rgb(var(--theme-primary-600)); }
+.border-theme-accent { border-color: rgb(var(--theme-accent-200)); }
+
+.hover\:bg-theme-primary-dark:hover { background-color: rgb(var(--theme-primary-800)); }
+.hover\:text-theme-primary:hover { color: rgb(var(--theme-text-primary)); }
+
+.focus\:ring-theme-primary:focus { 
+  --tw-ring-color: rgb(var(--theme-primary-500));
+}
+.focus\:border-theme-primary:focus { 
+  border-color: rgb(var(--theme-primary-600));
+}

@@ -179,7 +179,7 @@ function TickerSearchDropdown({
       {/* Loading indicator for search */}
       {isSearching && (
         <div className="absolute right-3 top-3">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-theme-primary"></div>
         </div>
       )}
 
@@ -199,7 +199,7 @@ function TickerSearchDropdown({
             <div
               key={`${searchItem.symbol}${searchItem.exchDisp}${searchItem.typeDisp}`}
               className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                index === selectedIndex ? "bg-blue-100" : ""
+                index === selectedIndex ? "bg-theme-accent-border" : ""
               }`}
               onClick={() => {
                 onSelect(searchItem);

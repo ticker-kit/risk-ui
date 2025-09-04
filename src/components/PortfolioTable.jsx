@@ -74,7 +74,7 @@ function PortfolioTable({
                     onChange={(e) => setEditQuantity(e.target.value)}
                     step="0.01"
                     min="0.01"
-                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary"
                   />
                   <button
                     onClick={saveEdit}
@@ -116,7 +116,7 @@ function PortfolioTable({
                 {editingPosition === position.ticker ? null : (
                   <button
                     onClick={() => startEdit(position)}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-theme-secondary hover:text-theme-primary"
                   >
                     Edit
                   </button>

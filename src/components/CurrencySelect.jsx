@@ -73,7 +73,7 @@ export default function CurrencySelect({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full min-w-[120px] px-3 py-2 border border-gray-300 rounded-md bg-white shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        className="flex items-center justify-between w-full min-w-[120px] px-3 py-2 border border-gray-300 rounded-md bg-white shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-theme-primary"
       >
         <span className="font-semibold tracking-wide">
           {options.find((o) => o.code === value)?.label || value}
@@ -107,7 +107,7 @@ export default function CurrencySelect({
                   key={option.code}
                   className={[
                     "px-3 py-2 cursor-pointer hover:bg-gray-100",
-                    isSelected ? "bg-blue-50 font-semibold" : "font-normal",
+                    isSelected ? "bg-theme-accent-light font-semibold" : "font-normal",
                   ].join(" ")}
                 >
                   <button
