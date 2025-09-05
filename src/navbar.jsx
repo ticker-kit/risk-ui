@@ -8,6 +8,8 @@ export default function AppNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef(null);
+  const mobileMenuRef = useRef(null);
+  const hamburgerRef = useRef(null);
 
   const navigation = [
     { name: "Home", href: "/", disabled: false },
@@ -52,18 +54,25 @@ export default function AppNavbar() {
     );
   };
 
-  // Close account dropdown on outside click or Esc
+  // Close account dropdown and mobile menu on outside click or Esc
   useEffect(() => {
-    // if (!accountOpen) return;
-
     const handleClickOutside = (event) => {
       if (accountRef.current && !accountRef.current.contains(event.target)) {
         setAccountOpen(false);
       }
+      // Close mobile menu if click is outside both the menu and the hamburger button
+      if (mobileMenuRef.current && hamburgerRef.current && 
+          !mobileMenuRef.current.contains(event.target) && 
+          !hamburgerRef.current.contains(event.target)) {
+        setMobileOpen(false);
+      }
     };
 
     const onKey = (e) => {
-      if (e.key === "Escape") setAccountOpen(false);
+      if (e.key === "Escape") {
+        setAccountOpen(false);
+        setMobileOpen(false);
+      }
     };
 
     document.addEventListener("keydown", onKey);
@@ -86,6 +95,7 @@ export default function AppNavbar() {
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((o) => !o)}
               className="sm:hidden p-2"
+              ref={hamburgerRef}
             >
               {mobileOpen ? (
                 <svg
@@ -211,7 +221,7 @@ export default function AppNavbar() {
 
         {/* Mobile menu: nav links only */}
         {mobileOpen && (
-          <div className="sm:hidden border-t border-theme-primary">
+          <div className="sm:hidden border-t border-theme-primary" ref={mobileMenuRef}>
             <div className="absolute bg-theme-primary -mx-4 z-10">
               {navigation.map((item) => (
                 <NavigationItem
