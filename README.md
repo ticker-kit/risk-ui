@@ -31,7 +31,7 @@ npm install
 
 3. **Set up environment:**
 ```bash
-cp env.example .env.local
+cp .env.example .env.local
 # Edit .env.local to configure your API URL (default: http://localhost:8000)
 ```
 
