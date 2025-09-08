@@ -1,6 +1,63 @@
-# Ticker UI - Event-Driven Portfolio Management Frontend
+# Risk UI - Portfolio Management Frontend
 
-A modern React frontend for managing investment portfolios with real-time price updates powered by an event-driven microservices architecture.
+A modern React frontend application for managing investment portfolios with real-time price updates. Built with React 19 and powered by an event-driven microservices architecture using Redis pub/sub for seamless data synchronization.
+
+## What This Project Does
+
+Risk UI is a comprehensive portfolio management tool that allows users to:
+- **Manage Portfolio Positions**: Add, edit, and delete investment positions
+- **Real-Time Price Updates**: Get live ticker prices through event-driven updates
+- **Risk Analysis**: Calculate and visualize key metrics (volatility, Sharpe ratio, max drawdown)
+- **Ticker Search**: Search and validate ticker symbols before adding to portfolios
+
+## Getting Started
+
+### Prerequisites
+- Node.js 16 or higher
+- Git
+
+### Clone and Run
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/ticker-kit/risk-ui.git
+cd risk-ui
+```
+
+2. **Install dependencies:**
+```bash
+npm install
+```
+
+3. **Set up environment:**
+```bash
+cp env.example .env.local
+# Edit .env.local to configure your API URL (default: http://localhost:8000)
+```
+
+4. **Start the development server:**
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`
+
+### Quick Start with Scripts
+
+For convenience, you can use the provided startup scripts:
+
+```bash
+# Windows
+powershell -ExecutionPolicy Bypass -File start.ps1
+
+# macOS/Linux
+./start.sh
+```
+
+## 🌐 Live Demo
+
+Try the application online: **https://risk-ui-nine.vercel.app**  
+*Powered by FastAPI backend hosted on Render*
 
 ## 🚀 Features
 
@@ -90,37 +147,24 @@ The frontend communicates with the `risk-api` using these endpoints:
 - `POST /risk_metrics_from_ticker` - Calculate Ticker metrics
 - `GET /search_ticker` - Search for ticker symbols
 
-## 🚀 Development
+## 🚀 Development Options
 
-### Prerequisites
-
-- Node.js 16+
-- npm or yarn
-- Docker (optional, for full stack)
-
-### Quick Start
-
-#### Option 1: Using Startup Scripts (Recommended)
-
+### Local Development (API Required Separately)
 ```bash
-# Windows
-powershell -ExecutionPolicy Bypass -File start.ps1
-
-# Unix/Linux/Mac
-./start.sh
+npm run dev
+# Requires the risk-api backend running on localhost:8000
 ```
 
-#### Option 2: Manual Setup
-
+### Full Stack with Docker
 ```bash
-# Install dependencies
-npm install
+docker-compose up --build
+# Includes UI, API, database, and Redis - complete development environment
+```
 
-# Configure environment
-cp .env.example .env.local  # Edit as needed
-
-# Start development server
-npm run dev
+### Production Build
+```bash
+npm run build
+npm run preview
 ```
 
 ### Environment Configuration
@@ -189,11 +233,6 @@ npm run preview
 - **Scalable**: Can handle multiple concurrent price update requests
 - **Responsive**: Modern UI with loading states and error handling
 - **Event-Driven**: Leverages Redis Pub/Sub for async communication
-
-## 📊 Live Demo
-
-https://risk-ui-nine.vercel.app
-_Powered by FastAPI backend hosted on Render_
 
 ## 🔧 Docker Commands
 
